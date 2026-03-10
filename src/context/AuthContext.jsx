@@ -10,19 +10,50 @@ export function AuthProvider({ children }) {
     const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
-        // Temporizador de emergencia: Si en 5 segundos no ha inicializado, forzarlo.
-        const timer = setTimeout(() => {
-            if (!initialized) {
-                console.warn('⚠️ Inicialización forzada por tiempo de espera excedido');
-                setLoading(false);
-                setInitialized(true);
-            }
-        }, 5000);
+        let isMounted = true;
 
-        // Suscribirse a cambios (esto también maneja la sesión inicial en Supabase v2)
+        // Temporizador de emergencia (8 segundos para redes muy lentas)
+        const timer = setTimeout(() => {
+            if (isMounted && !initialized) {
+                console.warn('⚠️ Inicialización forzada por tiempo de espera (Timeout)');
+                setInitialized(true);
+                setLoading(false);
+            }
+        }, 8000);
+
+        const checkSession = async () => {
+            try {
+                // Verificación inmediata de sesión (más rápido que esperar al evento)
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) throw error;
+
+                if (session?.user) {
+                    console.log('👤 Sesión activa detectada para:', session.user.email);
+                    setUser(session.user);
+                    await fetchProfile(session.user.id);
+                } else {
+                    console.log('ℹ️ No hay sesión activa.');
+                    setInitialized(true);
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error('❌ Error verificando sesión inicial:', err.message);
+                setInitialized(true);
+                setLoading(false);
+            } finally {
+                if (isMounted) clearTimeout(timer);
+            }
+        };
+
+        checkSession();
+
+        // Escuchar cambios futuros
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
+                if (!isMounted) return;
                 console.log('🔔 Evento Auth:', event);
+
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
 
@@ -30,41 +61,46 @@ export function AuthProvider({ children }) {
                     await fetchProfile(currentUser.id);
                 } else {
                     setProfile(null);
-                    setLoading(false);
                     setInitialized(true);
+                    setLoading(false);
                 }
-                clearTimeout(timer);
             }
         );
 
         return () => {
+            isMounted = false;
             subscription.unsubscribe();
             clearTimeout(timer);
         };
     }, []);
 
     const fetchProfile = async (userId) => {
-        console.log('🔍 Cargando perfil para:', userId);
+        if (!userId) return;
+        console.log('🔍 Buscando perfil en DB para:', userId);
+
         try {
             const { data, error } = await supabase
                 .from('user_profiles')
                 .select('*')
                 .eq('user_id', userId)
-                .single();
+                .maybeSingle(); // Usamos maybeSingle para evitar error de 0 filas
 
             if (error) {
-                console.warn('⚠️ Perfil no encontrado o inaccesible:', error.message);
+                console.error('❌ Error de red/permisos cargando perfil:', error.message);
+                setProfile(null);
+            } else if (!data) {
+                console.warn('⚠️ ATENCIÓN: El usuario no tiene entrada en "user_profiles". Acceso restringido.');
                 setProfile(null);
             } else {
-                console.log('✅ Perfil cargado:', data.role);
+                console.log('✅ Perfil cargado exitosamente. Rol:', data.role);
                 setProfile(data);
             }
         } catch (err) {
             console.error('❌ Error crítico en fetchProfile:', err);
             setProfile(null);
         } finally {
-            setLoading(false);
             setInitialized(true);
+            setLoading(false);
         }
     };
 
