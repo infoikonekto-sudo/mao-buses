@@ -1,13 +1,13 @@
 @echo off
 echo ========================================
-echo   SUBIR FIX DE RUTAS Y SIDEBAR
+echo   ULTIMO FIX DE ICONOS Y RUTAS
 echo ========================================
 echo.
 cd /d "c:\Users\ludin\Desktop\mao salidas\colegio-roosevelt"
 
-echo 1. Preparando fixes...
+echo 1. Sincronizando cambios...
 git add .
-git commit -m "fix: solucionar error 404 de rutas con vercel.json y mejorar contraste del sidebar"
+git commit -m "fix: restaurar ruta absoluta de iconos para evitar 404 en subrutas"
 
 echo 2. Subiendo a GitHub...
 git push origin main
