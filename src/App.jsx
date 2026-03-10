@@ -46,22 +46,51 @@ function ProtectedRoute({ children }) {
 
 function AppContent() {
   const { user, initialized } = useAuth();
+  const [showRescue, setShowRescue] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowRescue(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [initialized]);
 
   if (!initialized) {
     return (
       <div style={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
         background: 'linear-gradient(135deg, #0D2B55 0%, #1A5FA8 100%)',
         color: 'white',
-        fontSize: '1.5rem'
+        fontSize: '1.5rem',
+        textAlign: 'center'
       }}>
-        <div>
-          <div className="spinner"></div>
-          <p>Inicializando Sistema...</p>
-        </div>
+        <div className="spinner"></div>
+        <p>Inicializando Sistema...</p>
+
+        {showRescue && (
+          <div style={{ marginTop: '20px', animation: 'fadeIn 0.5s' }}>
+            <p style={{ fontSize: '0.9rem', opacity: 0.8, marginBottom: '15px' }}>
+              La conexión está tardando más de lo normal.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '10px 20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: '1px solid white',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              🔄 Recargar Aplicación
+            </button>
+          </div>
+        )}
       </div>
     );
   }

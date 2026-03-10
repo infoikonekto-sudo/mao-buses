@@ -10,20 +10,43 @@ export function AuthProvider({ children }) {
     const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
-        // Obtener sesión inicial
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-                setUser(session.user);
-                fetchProfile(session.user.id);
-            } else {
+        // Temporizador de emergencia: Si en 3.5 segundos no ha inicializado, forzarlo.
+        const timer = setTimeout(() => {
+            if (!initialized) {
+                console.warn('Inicialización forzada por tiempo de espera excedido');
                 setLoading(false);
                 setInitialized(true);
             }
-        });
+        }, 3500);
 
-        // Suscribirse a cambios
+        const initializeAuth = async () => {
+            try {
+                console.log('Iniciando verificación de sesión...');
+                const { data: { session } } = await supabase.auth.getSession();
+                const currentUser = session?.user ?? null;
+                setUser(currentUser);
+
+                if (currentUser) {
+                    console.log('Usuario detectado:', currentUser.email);
+                    await fetchProfile(currentUser.id);
+                } else {
+                    console.log('No hay sesión activa.');
+                }
+            } catch (error) {
+                console.error('Error inicializando auth:', error);
+            } finally {
+                setLoading(false);
+                setInitialized(true);
+                clearTimeout(timer);
+                console.log('Inicialización completada correctamente.');
+            }
+        };
+
+        initializeAuth();
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
+            async (event, session) => {
+                console.log('Cambio de estado auth:', event);
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
                 if (currentUser) {
@@ -31,11 +54,15 @@ export function AuthProvider({ children }) {
                 } else {
                     setProfile(null);
                     setLoading(false);
+                    setInitialized(true);
                 }
             }
         );
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+            clearTimeout(timer);
+        };
     }, []);
 
     const fetchProfile = async (userId) => {
@@ -48,11 +75,13 @@ export function AuthProvider({ children }) {
 
             if (data) {
                 setProfile(data);
-            } else if (error && error.code !== 'PGRST116') {
-                console.error('Error cargando perfil:', error);
+            } else {
+                // Si no hay perfil, el sistema sigue pero con permisos mínimos (o nulos)
+                setProfile(null);
             }
         } catch (err) {
             console.error('Error en fetchProfile:', err);
+            setProfile(null);
         } finally {
             setLoading(false);
             setInitialized(true);
