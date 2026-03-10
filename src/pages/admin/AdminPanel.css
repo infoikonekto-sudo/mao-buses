@@ -1,0 +1,280 @@
+/* AdminPanel.css - Panel de Administración con Sidebar Moderno */
+
+.admin-container {
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+}
+
+.admin-main {
+  flex: 1;
+  margin-left: 240px;
+  /* Desktop default */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: margin-left var(--t-normal);
+}
+
+@media (max-width: 1024px) {
+  .admin-main {
+    margin-left: 0 !important;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+.admin-header {
+  background: var(--blanco);
+  border-bottom: 1px solid var(--gris-borde);
+  padding: 16px 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content h1 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--negro-texto);
+  margin: 0;
+}
+
+.btn-import-excel {
+  background: var(--azul-claro);
+  color: var(--blanco);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-import-excel:hover {
+  background: #1A6BC0;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* quick link buttons for opening display screens */
+.display-links {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.display-links button {
+  background: var(--azul-claro);
+  color: var(--blanco);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.display-links button:hover {
+  background: #1A6BC0;
+  transform: translateY(-1px);
+}
+
+/* nuevo header global */
+.app-header {
+  height: 60px;
+  background: var(--azul-marino);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-header-mobile-brand {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .app-header {
+    justify-content: space-between;
+  }
+}
+
+.hamburger-menu {
+  display: none;
+  /* Oculto por defecto en desktop */
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 1.4rem;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.hamburger-menu:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 1024px) {
+  .hamburger-menu {
+    display: block;
+  }
+
+  .app-header-mobile-brand {
+    display: block;
+  }
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-logo {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.app-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+@media (max-width: 480px) {
+  .app-title {
+    font-size: 0.85rem;
+    max-width: 140px;
+  }
+
+  .app-subtitle {
+    display: none;
+  }
+
+  .app-logo {
+    display: none;
+  }
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-import {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #2D7DD2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.btn-import:hover {
+  background: #1A6BC0;
+}
+
+.app-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  /* Texto blanco para fondo oscuro */
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--r-full);
+}
+
+.app-user-dot {
+  width: 32px;
+  height: 32px;
+  background: var(--azul-claro);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .app-user {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-user span {
+    display: none;
+  }
+
+  .btn-import span {
+    margin: 0;
+  }
+
+  .btn-import {
+    padding: 8px 12px;
+  }
+
+  .btn-import b {
+    display: none;
+  }
+
+  /* Si tuviera texto */
+  .user-email-text {
+    display: none;
+  }
+}

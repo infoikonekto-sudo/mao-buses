@@ -1,0 +1,28 @@
+/* HistorialPage.css */
+
+.historial-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.historial-table th,
+.historial-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--gris-borde);
+  text-align: left;
+}
+
+.historial-table th {
+  background: var(--azul-medio);
+  color: white;
+  font-weight: 600;
+}
+
+.historial-table tbody tr:nth-child(even) {
+  background: var(--gris-fondo);
+}
+
+.historial-table tbody tr:hover {
+  background: rgba(26,95,168,0.1);
+}

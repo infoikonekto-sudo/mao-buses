@@ -1,0 +1,138 @@
+/* ConfigPage.css - Estilos para Configuración */
+
+.config-container {
+    padding: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+    animation: fadeIn 0.5s ease;
+}
+
+.config-section {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid #E5E9F0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+}
+
+.config-section h2 {
+    font-family: 'Outfit', sans-serif;
+    margin-bottom: 8px;
+    color: #0F172A;
+}
+
+.subtitle {
+    color: #64748B;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+}
+
+.user-form {
+    display: grid;
+    gap: 20px;
+    max-width: 500px;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+}
+
+@media (max-width: 640px) {
+    .config-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .config-section {
+        padding: 20px;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.form-group input {
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1.5px solid #E2E8F0;
+    font-size: 0.95rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2D7DD2;
+    box-shadow: 0 0 0 3px rgba(45, 125, 210, 0.1);
+}
+
+.config-message {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.config-message.success {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.config-message.error {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.config-message.info {
+    background: #E0F2FE;
+    color: #075985;
+}
+
+.maintenance-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: #FFF7ED;
+    border-radius: 16px;
+    border: 1px solid #FED7AA;
+}
+
+.maintenance-card h3 {
+    font-size: 1rem;
+    margin-bottom: 4px;
+    color: #9A3412;
+}
+
+.maintenance-card p {
+    font-size: 0.85rem;
+    color: #C2410C;
+}
+
+.btn-danger {
+    padding: 10px 24px;
+    background: #EF4444;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background: #DC2626;
+    transform: scale(1.05);
+}
