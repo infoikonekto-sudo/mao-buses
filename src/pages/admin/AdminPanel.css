@@ -105,7 +105,8 @@
 /* nuevo header global */
 .app-header {
   height: 60px;
-  background: var(--azul-marino);
+  background: #0F2A4A !important;
+  /* Azul marino profundo unificado */
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -113,7 +114,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .app-header-mobile-brand {

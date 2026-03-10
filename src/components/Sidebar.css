@@ -1,17 +1,18 @@
 .sidebar {
     width: 240px;
-    min-height: 100vh;
+    height: 100vh;
     background: #0F2A4A !important;
-    /* Forzar azul marino profundo */
     display: flex;
     flex-direction: column;
     padding: 0;
     position: fixed;
     left: 0;
     top: 0;
+    margin: 0;
     z-index: 1000;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease;
+    overflow: hidden;
 }
 
 .sidebar-brand {
