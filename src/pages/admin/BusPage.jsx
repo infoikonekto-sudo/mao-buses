@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Bus, UserMinus, Edit2, CheckCircle2, AlertCircle } from 'lucide-react';
