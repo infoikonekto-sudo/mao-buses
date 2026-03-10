@@ -32,15 +32,27 @@ export function AuthProvider({ children }) {
 
                 if (currentUser) {
                     console.log('👤 Sesión activa:', currentUser.email);
-                    // Cargar perfil
-                    const { data, error } = await supabase
+
+                    // Carrera de promesas: Si el perfil tarda más de 4s (posible loop RLS), abortar carga
+                    const profilePromise = supabase
                         .from('user_profiles')
                         .select('*')
                         .eq('user_id', currentUser.id)
                         .maybeSingle();
 
-                    if (error) console.error('❌ Error perfil:', error.message);
-                    setProfile(data || null);
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Profile Timeout (RLS Loop?)')), 4000)
+                    );
+
+                    try {
+                        const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
+                        if (error) throw error;
+                        console.log('✅ Perfil obtenido:', data?.role || 'Ninguno');
+                        setProfile(data || null);
+                    } catch (profileErr) {
+                        console.error('⚠️ Error cargando perfil (se usará acceso básico):', profileErr.message);
+                        setProfile(null);
+                    }
                 } else {
                     console.log('ℹ️ Sin sesión activa.');
                     setProfile(null);
