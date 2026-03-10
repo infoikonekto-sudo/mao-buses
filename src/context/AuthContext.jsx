@@ -11,98 +11,66 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         let isMounted = true;
+        let isProcessing = false;
 
-        // Temporizador de emergencia (8 segundos para redes muy lentas)
-        const timer = setTimeout(() => {
+        // Temporizador de rescate (10 segundos)
+        const rescueTimer = setTimeout(() => {
             if (isMounted && !initialized) {
-                console.warn('⚠️ Inicialización forzada por tiempo de espera (Timeout)');
-                setInitialized(true);
+                console.warn('⚠️ Rescate: Forzando inicialización por demora de red.');
                 setLoading(false);
+                setInitialized(true);
             }
-        }, 8000);
+        }, 10000);
 
-        const checkSession = async () => {
+        const handleAuthUpdate = async (session) => {
+            if (!isMounted || isProcessing) return;
+            isProcessing = true;
+
             try {
-                // Verificación inmediata de sesión (más rápido que esperar al evento)
-                const { data: { session }, error } = await supabase.auth.getSession();
-
-                if (error) throw error;
-
-                if (session?.user) {
-                    console.log('👤 Sesión activa detectada para:', session.user.email);
-                    setUser(session.user);
-                    await fetchProfile(session.user.id);
-                } else {
-                    console.log('ℹ️ No hay sesión activa.');
-                    setInitialized(true);
-                    setLoading(false);
-                }
-            } catch (err) {
-                console.error('❌ Error verificando sesión inicial:', err.message);
-                setInitialized(true);
-                setLoading(false);
-            } finally {
-                if (isMounted) clearTimeout(timer);
-            }
-        };
-
-        checkSession();
-
-        // Escuchar cambios futuros
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                if (!isMounted) return;
-                console.log('🔔 Evento Auth:', event);
-
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
 
                 if (currentUser) {
-                    await fetchProfile(currentUser.id);
+                    console.log('👤 Sesión activa:', currentUser.email);
+                    // Cargar perfil
+                    const { data, error } = await supabase
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('user_id', currentUser.id)
+                        .maybeSingle();
+
+                    if (error) console.error('❌ Error perfil:', error.message);
+                    setProfile(data || null);
                 } else {
+                    console.log('ℹ️ Sin sesión activa.');
                     setProfile(null);
-                    setInitialized(true);
-                    setLoading(false);
                 }
+            } catch (err) {
+                console.error('❌ Error crítico auth:', err);
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                    setInitialized(true);
+                    isProcessing = false;
+                    clearTimeout(rescueTimer);
+                }
+            }
+        };
+
+        // Escuchamos el estado inicial y cambios futuros en una sola suscripción
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (_event, session) => {
+                console.log('🔔 Evento Auth:', _event);
+                await handleAuthUpdate(session);
             }
         );
 
         return () => {
             isMounted = false;
             subscription.unsubscribe();
-            clearTimeout(timer);
+            clearTimeout(rescueTimer);
         };
     }, []);
-
-    const fetchProfile = async (userId) => {
-        if (!userId) return;
-        console.log('🔍 Buscando perfil en DB para:', userId);
-
-        try {
-            const { data, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('user_id', userId)
-                .maybeSingle(); // Usamos maybeSingle para evitar error de 0 filas
-
-            if (error) {
-                console.error('❌ Error de red/permisos cargando perfil:', error.message);
-                setProfile(null);
-            } else if (!data) {
-                console.warn('⚠️ ATENCIÓN: El usuario no tiene entrada en "user_profiles". Acceso restringido.');
-                setProfile(null);
-            } else {
-                console.log('✅ Perfil cargado exitosamente. Rol:', data.role);
-                setProfile(data);
-            }
-        } catch (err) {
-            console.error('❌ Error crítico en fetchProfile:', err);
-            setProfile(null);
-        } finally {
-            setInitialized(true);
-            setLoading(false);
-        }
-    };
 
     const logout = async () => {
         try {
