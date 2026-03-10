@@ -11,71 +11,50 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         let isMounted = true;
-        let isProcessing = false;
 
-        // Temporizador de rescate (10 segundos)
+        // Temporizador de rescate (6 segundos)
         const rescueTimer = setTimeout(() => {
             if (isMounted && !initialized) {
                 console.warn('⚠️ Rescate: Forzando inicialización por demora de red.');
                 setLoading(false);
                 setInitialized(true);
             }
-        }, 10000);
+        }, 6000);
 
-        const handleAuthUpdate = async (session) => {
-            if (!isMounted || isProcessing) return;
-            isProcessing = true;
-
+        const initAuth = async () => {
             try {
+                // 1. Sesión inicial
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
 
                 if (currentUser) {
-                    console.log('👤 Sesión activa:', currentUser.email);
+                    // 2. Cargar perfil (con timeout interno)
+                    const { data: profileData } = await Promise.race([
+                        supabase.from('user_profiles').select('*').eq('user_id', currentUser.id).maybeSingle(),
+                        new Promise((_, r) => setTimeout(() => r('timeout'), 3000))
+                    ]).catch(() => ({ data: null }));
 
-                    // Carrera de promesas: Si el perfil tarda más de 4s (posible loop RLS), abortar carga
-                    const profilePromise = supabase
-                        .from('user_profiles')
-                        .select('*')
-                        .eq('user_id', currentUser.id)
-                        .maybeSingle();
-
-                    const timeoutPromise = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Profile Timeout (RLS Loop?)')), 4000)
-                    );
-
-                    try {
-                        const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
-                        if (error) throw error;
-                        console.log('✅ Perfil obtenido:', data?.role || 'Ninguno');
-                        setProfile(data || null);
-                    } catch (profileErr) {
-                        console.error('⚠️ Error cargando perfil (se usará acceso básico):', profileErr.message);
-                        setProfile(null);
-                    }
-                } else {
-                    console.log('ℹ️ Sin sesión activa.');
-                    setProfile(null);
+                    if (isMounted) setProfile(profileData);
                 }
             } catch (err) {
-                console.error('❌ Error crítico auth:', err);
+                console.error('❌ Error Auth:', err.message);
             } finally {
                 if (isMounted) {
                     setLoading(false);
                     setInitialized(true);
-                    isProcessing = false;
                     clearTimeout(rescueTimer);
                 }
             }
         };
 
-        // Escuchamos el estado inicial y cambios futuros en una sola suscripción
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
-                console.log('🔔 Evento Auth:', _event);
-                await handleAuthUpdate(session);
-            }
-        );
+        initAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (isMounted) setUser(session?.user ?? null);
+        });
 
         return () => {
             isMounted = false;
