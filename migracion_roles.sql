@@ -1,5 +1,5 @@
 -- ==========================================
--- SCRIPT FINAL ANTI-RECURSIÓN (SOLUCIÓN DEFINITIVA)
+-- SCRIPT FINAL ANTI-RECURSIÓN (CORREGIDO)
 -- ==========================================
 
 -- 1. Asegurar tabla base
@@ -25,10 +25,18 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
 -- 2. Habilitar RLS
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 
--- 3. ELIMINAR TODAS LAS POLÍTICAS PREVIAS (Limpieza total para evitar conflictos)
+-- 3. ELIMINAR TODAS LAS POLÍTICAS PREVIAS (Sintaxis Estándar)
 DO $$ 
 BEGIN
-    DELETE FROM pg_policy WHERE tablename = 'user_profiles';
+    DROP POLICY IF EXISTS "Users can view own profile" ON public.user_profiles;
+    DROP POLICY IF EXISTS "Superadmins can do everything" ON public.user_profiles;
+    DROP POLICY IF EXISTS "auth_read_all" ON public.user_profiles;
+    DROP POLICY IF EXISTS "superadmin_manage_all" ON public.user_profiles;
+    DROP POLICY IF EXISTS "perfiles_lectura_autenticados" ON public.user_profiles;
+    DROP POLICY IF EXISTS "perfiles_gestion_superadmin" ON public.user_profiles;
+EXCEPTION
+    WHEN undefined_object THEN
+        NULL;
 END $$;
 
 -- 4. FUNCIÓN SECURITY DEFINER (Crucial: Rompe la recursión)
@@ -36,16 +44,16 @@ END $$;
 CREATE OR REPLACE FUNCTION public.check_is_superadmin()
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN (
-    SELECT (role = 'superadmin')
+  RETURN EXISTS (
+    SELECT 1
     FROM public.user_profiles
-    WHERE user_id = auth.uid()
+    WHERE user_id = auth.uid() AND role = 'superadmin'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 5. NUEVAS POLÍTICAS NO RECURSIVAS
--- A. Lectura: Cualquier usuario autenticado puede leer perfiles (Sin comprobación de rol aquí para evitar bucle)
+-- A. Lectura: Cualquier usuario autenticado puede leer perfiles
 CREATE POLICY "perfiles_lectura_autenticados" 
 ON public.user_profiles FOR SELECT 
 TO authenticated 
@@ -57,7 +65,7 @@ ON public.user_profiles FOR ALL
 TO authenticated 
 USING (public.check_is_superadmin());
 
--- 6. Trigger para timestamps (Opcional pero recomendado)
+-- 6. Trigger para timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -73,4 +81,4 @@ CREATE TRIGGER update_user_profiles_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- VERIFICACIÓN FINAL
-SELECT '✅ Políticas anti-recursión aplicadas. Reinicia tu app.' as resultado;
+SELECT '✅ Políticas anti-recursión aplicadas con éxito.' as resultado;

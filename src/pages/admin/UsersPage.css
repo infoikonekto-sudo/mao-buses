@@ -44,72 +44,109 @@
     transform: translateY(-2px);
 }
 
-/* Formulario */
+/* Formulario Mejorado */
 .user-form {
     background: white;
-    padding: 24px;
-    border-radius: 16px;
-    margin-bottom: 32px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 20px;
-    align-items: flex-end;
-}
-
-.form-group {
+    padding: 32px;
+    border-radius: 20px;
+    margin-bottom: 40px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 24px;
+    border: 1px solid #e2e8f0;
 }
 
-.form-group label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #475569;
+.form-sections {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 40px;
 }
 
-.input-with-icon {
-    position: relative;
+.form-auth-section h3,
+.form-permissions-section h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #0F2A4A;
+}
+
+.form-auth-section {
     display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Matriz de Permisos */
+.form-permissions-section {
+    background: #f8fafc;
+    padding: 24px;
+    border-radius: 16px;
+}
+
+.permissions-grid-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+
+.permission-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 10px 16px;
     align-items: center;
+    border-bottom: 1px solid #f1f5f9;
 }
 
-.input-with-icon svg {
-    position: absolute;
-    left: 12px;
-    color: #94a3b8;
+.permission-row:last-child {
+    border-bottom: none;
 }
 
-.input-with-icon input,
-.form-group select {
-    width: 100%;
-    padding: 10px 12px 10px 38px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
-    font-family: inherit;
-    transition: all 0.2s;
+.permission-row .mod-label {
+    font-weight: 600;
+    color: #334155;
 }
 
-.form-group select {
-    padding-left: 12px;
-}
-
-.input-with-icon input:focus,
-.form-group select:focus {
-    border-color: #2D7DD2;
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(45, 125, 210, 0.1);
+.permission-row input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #2D7DD2;
+    justify-self: center;
 }
 
 .btn-save-user {
-    padding: 12px 24px;
-    background: #22c55e;
+    padding: 14px;
+    background: #2D7DD2;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: 700;
+    font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s;
+    margin-top: 10px;
+}
+
+.btn-save-user:hover {
+    background: #0F2A4A;
+    box-shadow: 0 4px 12px rgba(15, 42, 74, 0.2);
+}
+
+.btn-add-user.cancel {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+@media (max-width: 1024px) {
+    .form-sections {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Lista de Usuarios */

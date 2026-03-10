@@ -13,6 +13,7 @@ export default function BusPage() {
   const [filtro, setFiltro] = useState('');
   const [filtroRuta, setFiltroRuta] = useState('');
   const [filtroGrado, setFiltroGrado] = useState('');
+  const [filtroAsistencia, setFiltroAsistencia] = useState('todos'); // 'todos', 'presentes', 'ausentes'
   const [saving, setSaving] = useState(null); // carnet del alumno guardando
 
   useEffect(() => {
@@ -93,8 +94,11 @@ export default function BusPage() {
       a.carnet.includes(filtro);
     const matchesRuta = filtroRuta === '' || (a.ruta && a.ruta.toString() === filtroRuta);
     const matchesGrado = filtroGrado === '' || a.grado === filtroGrado;
+    const matchesAsistencia = filtroAsistencia === 'todos' ||
+      (filtroAsistencia === 'ausentes' && a.ausente) ||
+      (filtroAsistencia === 'presentes' && !a.ausente);
 
-    return matchesSearch && matchesRuta && matchesGrado;
+    return matchesSearch && matchesRuta && matchesGrado && matchesAsistencia;
   });
 
   const gradosUnicos = [...new Set(alumnos.map(a => a.grado))].sort();
@@ -150,6 +154,16 @@ export default function BusPage() {
             {gradosUnicos.map(g => (
               <option key={g} value={g}>{g}</option>
             ))}
+          </select>
+
+          <select
+            className="select-filter"
+            value={filtroAsistencia}
+            onChange={(e) => setFiltroAsistencia(e.target.value)}
+          >
+            <option value="todos">Asistencia: Todos</option>
+            <option value="presentes">Solo Presentes</option>
+            <option value="ausentes">Solo Ausentes</option>
           </select>
         </div>
         <div className="toolbar-actions">

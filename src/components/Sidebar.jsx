@@ -16,6 +16,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
     { id: 'qr', label: 'QR / Carnets', icon: '🎫', path: '/admin/qr', permission: 'qr' },
     { id: 'historial', label: 'Historial', icon: '🕒', path: '/admin/historial', permission: 'historial' },
     { id: 'analiticas', label: 'Analíticas', icon: '📈', path: '/admin/analytics', permission: 'analiticas' },
+    { id: 'users', label: 'Gestión Usuarios', icon: '🔐', path: '/admin/users', permission: 'users' },
     { id: 'config', label: 'Configuración', icon: '⚙️', path: '/admin/config', permission: 'config' },
   ];
 
