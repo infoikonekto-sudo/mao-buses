@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
+import './Sidebar.css';
 
 export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   const { logout, user } = useAuth();
