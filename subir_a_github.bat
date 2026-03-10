@@ -1,13 +1,13 @@
 @echo off
 echo ========================================
-echo   ULTIMO FIX DE ICONOS Y RUTAS
+echo   ULTIMO AJUSTE: SIDEBAR Y CONSOLA
 echo ========================================
 echo.
 cd /d "c:\Users\ludin\Desktop\mao salidas\colegio-roosevelt"
 
-echo 1. Sincronizando cambios...
+echo 1. Sincronizando cambios finales...
 git add .
-git commit -m "fix: restaurar ruta absoluta de iconos para evitar 404 en subrutas"
+git commit -m "fix: ocultar boton cierre sidebar en desktop y limpiar referencias de iconos"
 
 echo 2. Subiendo a GitHub...
 git push origin main
