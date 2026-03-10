@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { Bus, UserMinus, Edit2, CheckCircle2, AlertCircle } from 'lucide-react';
 import './BusPage.css';
 
 export default function BusPage() {
+  const { profile } = useAuth();
+  const isVisor = profile?.role === 'visor';
   const [alumnos, setAlumnos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
+  const [filtroRuta, setFiltroRuta] = useState('');
+  const [filtroGrado, setFiltroGrado] = useState('');
   const [saving, setSaving] = useState(null); // carnet del alumno guardando
 
   useEffect(() => {
@@ -74,11 +78,16 @@ export default function BusPage() {
     }
   }
 
-  const alumnosFiltrados = alumnos.filter(a =>
-    a.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-    a.carnet.includes(filtro) ||
-    (a.ruta && a.ruta.toString().includes(filtro))
-  );
+  const alumnosFiltrados = alumnos.filter(a => {
+    const matchesSearch = a.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
+      a.carnet.includes(filtro);
+    const matchesRuta = filtroRuta === '' || (a.ruta && a.ruta.toString() === filtroRuta);
+    const matchesGrado = filtroGrado === '' || a.grado === filtroGrado;
+
+    return matchesSearch && matchesRuta && matchesGrado;
+  });
+
+  const gradosUnicos = [...new Set(alumnos.map(a => a.grado))].sort();
 
   if (loading) return <div className="bus-loading">Cargando lista de transporte...</div>;
 
@@ -105,15 +114,40 @@ export default function BusPage() {
         <div className="search-box">
           <input
             type="text"
-            placeholder="Buscar por nombre, carnet o ruta..."
+            placeholder="Buscar por nombre o carnet..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
           />
         </div>
+        <div className="filter-group">
+          <select
+            className="select-filter"
+            value={filtroRuta}
+            onChange={(e) => setFiltroRuta(e.target.value)}
+          >
+            <option value="">Todas las Rutas</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12].map(r => (
+              <option key={r} value={r}>Ruta {r}</option>
+            ))}
+          </select>
+
+          <select
+            className="select-filter"
+            value={filtroGrado}
+            onChange={(e) => setFiltroGrado(e.target.value)}
+          >
+            <option value="">Todos los Grados</option>
+            {gradosUnicos.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
         <div className="toolbar-actions">
-          <button className="btn-reset-day" onClick={resetDiario}>
-            🧹 Reinicio Diario
-          </button>
+          {!isVisor && (
+            <button className="btn-reset-day" onClick={resetDiario}>
+              扫 Reinicio Diario
+            </button>
+          )}
           <button className="btn-sync" onClick={cargarAlumnosBus}>
             🔄 Refrescar
           </button>
@@ -163,6 +197,7 @@ export default function BusPage() {
                     <select
                       className="select-ruta"
                       value={alumno.ruta || ''}
+                      disabled={isVisor}
                       onChange={(e) => updateField(alumno.carnet, 'ruta', e.target.value)}
                     >
                       <option value="">Sin Ruta</option>
@@ -176,6 +211,7 @@ export default function BusPage() {
                       type="checkbox"
                       className="check-absent"
                       checked={alumno.ausente || false}
+                      disabled={isVisor}
                       onChange={(e) => updateField(alumno.carnet, 'ausente', e.target.checked)}
                     />
                   </td>
@@ -184,8 +220,9 @@ export default function BusPage() {
                       <input
                         type="text"
                         className="input-cambio"
-                        placeholder="Ej: Solo hoy ruta 5"
+                        placeholder={isVisor ? "" : "Ej: Solo hoy ruta 5"}
                         value={alumno.cambio || ''}
+                        disabled={isVisor}
                         onBlur={(e) => updateField(alumno.carnet, 'cambio', e.target.value)}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -201,6 +238,7 @@ export default function BusPage() {
                     <input
                       type="checkbox"
                       checked={alumno.act_l_m || false}
+                      disabled={isVisor}
                       onChange={(e) => updateField(alumno.carnet, 'act_l_m', e.target.checked)}
                     />
                   </td>
@@ -208,6 +246,7 @@ export default function BusPage() {
                     <input
                       type="checkbox"
                       checked={alumno.act_m_j || false}
+                      disabled={isVisor}
                       onChange={(e) => updateField(alumno.carnet, 'act_m_j', e.target.checked)}
                     />
                   </td>

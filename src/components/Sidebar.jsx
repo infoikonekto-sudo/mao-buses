@@ -4,24 +4,39 @@ import logo from '../assets/logo.png';
 import './Sidebar.css';
 
 export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
-  const { logout, user } = useAuth();
+  const { logout, user, profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const items = [
-    // ... (sin cambios en items)
-    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-    { id: 'scan', icon: '📱', label: 'Escanear' },
-    { id: 'alumnos', icon: '👤', label: 'Alumnos' },
-    { id: 'bus', icon: '🚌', label: 'Gestión de Bus' },
-    { id: 'qr', icon: '🎫', label: 'QR / Carnets' },
-    { id: 'historial', icon: '🕐', label: 'Historial' },
-    { id: 'analytics', icon: '📈', label: 'Analíticas' },
-    { id: 'config', icon: '⚙️', label: 'Configuración' },
-    // enlaces a las pantallas de cola (se abren en pestaña nueva)
+  const routes = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/admin', permission: 'dashboard' },
+    { id: 'scan', label: 'Escanear', icon: '📱', path: '/admin/scan', permission: 'qr' },
+    { id: 'alumnos', label: 'Alumnos', icon: '👥', path: '/admin/alumnos', permission: 'alumnos' },
+    { id: 'bus', label: 'Gestión de Bus', icon: '🚌', path: '/admin/bus', permission: 'bus' },
+    { id: 'qr', label: 'QR / Carnets', icon: '🎫', path: '/admin/qr', permission: 'qr' },
+    { id: 'historial', label: 'Historial', icon: '🕒', path: '/admin/historial', permission: 'historial' },
+    { id: 'analiticas', label: 'Analíticas', icon: '📈', path: '/admin/analytics', permission: 'analiticas' },
+    { id: 'config', label: 'Configuración', icon: '⚙️', path: '/admin/config', permission: 'config' },
+  ];
+
+  const filteredRoutes = routes.filter(route => {
+    if (!profile) return true; // Si no hay perfil (ej: cargando), mostrar todo por ahora
+    if (profile.role === 'superadmin') return true;
+
+    const permission = profile.permissions?.[route.permission];
+    return permission && permission !== 'none';
+  });
+
+  // enlaces a las pantallas de cola (se abren en pestaña nueva)
+  const displayRoutes = [
     { id: 'pantalla-primaria', icon: '📺', label: 'Pantalla Primaria', href: '/display/primaria' },
     { id: 'pantalla-preprimaria', icon: '📺', label: 'Pantalla Preprimaria', href: '/display/preprimaria' },
     { id: 'pantalla-secundaria', icon: '📺', label: 'Pantalla Secundaria', href: '/display/secundaria' }
   ];
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -29,7 +44,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className={`sidebar ${isOpen ? 'open' : ''} `}>
       {/* Botón Cerrar (Solo Mobile) */}
       <button className="sidebar-close-btn" onClick={onClose}>×</button>
       {/* Logo */}
@@ -48,17 +63,27 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
 
       {/* Nav */}
       <nav className="sidebar-nav">
-        {items.map(item => (
+        {filteredRoutes.map((route) => (
+          <button
+            key={route.id}
+            className={`nav-item ${isActive(route.path) ? 'active' : ''}`}
+            onClick={() => {
+              onTabChange(route.id);
+              navigate(route.path);
+              if (window.innerWidth < 1024) onClose();
+            }}
+          >
+            <span className="nav-icon">{route.icon}</span>
+            <span className="nav-label">{route.label}</span>
+            {isActive(route.path) && <div className="nav-indicator" />}
+          </button>
+        ))}
+        {displayRoutes.map(item => (
           <button
             key={item.id}
             className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
             onClick={() => {
-              if (item.href) {
-                // pantallas de cola se abren en pestaña nueva para no salir del panel
-                window.open(item.href, '_blank');
-              } else {
-                onTabChange(item.id);
-              }
+              window.open(item.href, '_blank');
             }}
           >
             <span className="nav-icon">{item.icon}</span>

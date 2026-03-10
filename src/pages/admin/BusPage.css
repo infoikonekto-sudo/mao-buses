@@ -64,11 +64,41 @@
 }
 
 .bus-toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.filter-group {
+  display: flex;
+  gap: 12px;
+}
+
+.select-filter {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e293b;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 130px;
+}
+
+.select-filter:focus {
+  border-color: #2D7DD2;
+  background: white;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(45, 125, 210, 0.1);
 }
 
 .toolbar-actions {

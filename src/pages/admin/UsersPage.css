@@ -1,0 +1,223 @@
+.users-container {
+    padding: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    animation: fadeIn 0.5s ease;
+}
+
+.users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.users-header h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0F2A4A;
+    margin: 0;
+}
+
+.users-header p {
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.btn-add-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #0F2A4A;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add-user:hover {
+    background: #2D7DD2;
+    transform: translateY(-2px);
+}
+
+/* Formulario */
+.user-form {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    margin-bottom: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon svg {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+}
+
+.input-with-icon input,
+.form-group select {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.form-group select {
+    padding-left: 12px;
+}
+
+.input-with-icon input:focus,
+.form-group select:focus {
+    border-color: #2D7DD2;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(45, 125, 210, 0.1);
+}
+
+.btn-save-user {
+    padding: 12px 24px;
+    background: #22c55e;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* Lista de Usuarios */
+.users-list {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.users-list table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-list th {
+    background: #f8fafc;
+    padding: 16px 24px;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.users-list td {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.role-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.role-badge.superadmin {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.role-badge.admin {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.role-badge.visor {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.permissions-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.perm-tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.perm-tag.read {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.perm-tag.write {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.btn-delete {
+    padding: 8px;
+    background: #fef2f2;
+    color: #ef4444;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    background: #fee2e2;
+}
+
+.access-denied {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    text-align: center;
+    color: #ef4444;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
