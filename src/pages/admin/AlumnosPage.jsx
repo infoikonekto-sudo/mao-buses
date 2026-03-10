@@ -23,16 +23,27 @@ export default function AlumnosPage() {
   }, []);
 
   async function cargarAlumnos() {
+    console.log('🔄 Iniciando carga de alumnos...');
     setCargando(true);
-    const { data, error } = await supabase
-      .from('alumnos')
-      .select('*')
-      .order('grado', { ascending: true })
-      .order('seccion', { ascending: true });
-    if (!error && data) {
-      setAlumnos(data);
+    try {
+      const { data, error } = await supabase
+        .from('alumnos')
+        .select('*')
+        .order('grado', { ascending: true })
+        .order('seccion', { ascending: true });
+
+      if (error) {
+        console.error('❌ Error Supabase (Alumnos):', error);
+      } else {
+        console.log('✅ Alumnos cargados:', data?.length || 0);
+        setAlumnos(data || []);
+      }
+    } catch (err) {
+      console.error('❌ Excepción cargando alumnos:', err);
+    } finally {
+      setCargando(false);
+      console.log('🏁 Proceso cargarAlumnos finalizado.');
     }
-    setCargando(false);
   }
 
   function handleFiltroChange(e) {

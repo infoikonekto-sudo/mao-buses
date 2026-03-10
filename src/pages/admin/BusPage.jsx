@@ -20,21 +20,29 @@ export default function BusPage() {
   }, []);
 
   async function cargarAlumnosBus() {
+    console.log('🚌 Iniciando carga de lista de bus...');
     setLoading(true);
-    const { data, error } = await supabase
-      .from('alumnos')
-      .select('*')
-      .eq('bus_hoy', true)
-      .eq('activo', true)
-      .order('ruta', { ascending: true })
-      .order('nombre', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('alumnos')
+        .select('*')
+        .eq('bus_hoy', true)
+        .eq('activo', true)
+        .order('ruta', { ascending: true })
+        .order('nombre', { ascending: true });
 
-    if (error) {
-      console.error('Error cargando bus:', error);
-    } else {
-      setAlumnos(data || []);
+      if (error) {
+        console.error('❌ Error Supabase (Bus):', error);
+      } else {
+        console.log('✅ Alumnos de bus cargados:', data?.length || 0);
+        setAlumnos(data || []);
+      }
+    } catch (err) {
+      console.error('❌ Excepción cargando bus:', err);
+    } finally {
+      setLoading(false);
+      console.log('🏁 Proceso cargarAlumnosBus finalizado.');
     }
-    setLoading(false);
   }
 
   async function updateField(carnet, field, value) {

@@ -10,45 +10,22 @@ export function AuthProvider({ children }) {
     const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
-        // Temporizador de emergencia: Si en 3.5 segundos no ha inicializado, forzarlo.
+        // Temporizador de emergencia: Si en 5 segundos no ha inicializado, forzarlo.
         const timer = setTimeout(() => {
             if (!initialized) {
-                console.warn('Inicialización forzada por tiempo de espera excedido');
+                console.warn('⚠️ Inicialización forzada por tiempo de espera excedido');
                 setLoading(false);
                 setInitialized(true);
             }
-        }, 3500);
+        }, 5000);
 
-        const initializeAuth = async () => {
-            try {
-                console.log('Iniciando verificación de sesión...');
-                const { data: { session } } = await supabase.auth.getSession();
-                const currentUser = session?.user ?? null;
-                setUser(currentUser);
-
-                if (currentUser) {
-                    console.log('Usuario detectado:', currentUser.email);
-                    await fetchProfile(currentUser.id);
-                } else {
-                    console.log('No hay sesión activa.');
-                }
-            } catch (error) {
-                console.error('Error inicializando auth:', error);
-            } finally {
-                setLoading(false);
-                setInitialized(true);
-                clearTimeout(timer);
-                console.log('Inicialización completada correctamente.');
-            }
-        };
-
-        initializeAuth();
-
+        // Suscribirse a cambios (esto también maneja la sesión inicial en Supabase v2)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-                console.log('Cambio de estado auth:', event);
+                console.log('🔔 Evento Auth:', event);
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
+
                 if (currentUser) {
                     await fetchProfile(currentUser.id);
                 } else {
@@ -56,6 +33,7 @@ export function AuthProvider({ children }) {
                     setLoading(false);
                     setInitialized(true);
                 }
+                clearTimeout(timer);
             }
         );
 
@@ -66,6 +44,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     const fetchProfile = async (userId) => {
+        console.log('🔍 Cargando perfil para:', userId);
         try {
             const { data, error } = await supabase
                 .from('user_profiles')
@@ -73,14 +52,15 @@ export function AuthProvider({ children }) {
                 .eq('user_id', userId)
                 .single();
 
-            if (data) {
-                setProfile(data);
-            } else {
-                // Si no hay perfil, el sistema sigue pero con permisos mínimos (o nulos)
+            if (error) {
+                console.warn('⚠️ Perfil no encontrado o inaccesible:', error.message);
                 setProfile(null);
+            } else {
+                console.log('✅ Perfil cargado:', data.role);
+                setProfile(data);
             }
         } catch (err) {
-            console.error('Error en fetchProfile:', err);
+            console.error('❌ Error crítico en fetchProfile:', err);
             setProfile(null);
         } finally {
             setLoading(false);
