@@ -21,11 +21,15 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   ];
 
   const filteredRoutes = routes.filter(route => {
-    if (!profile) return true; // Si no hay perfil (ej: cargando), mostrar todo por ahora
+    // Si no hay perfil, no mostrar nada administrativo por seguridad
+    if (!profile) return false;
+
+    // Superadmin tiene acceso a todo
     if (profile.role === 'superadmin') return true;
 
-    const permission = profile.permissions?.[route.permission];
-    return permission && permission !== 'none';
+    // Verificar permiso específico (debe ser distinto de 'none')
+    const userPerm = profile.permissions?.[route.permission];
+    return userPerm && userPerm !== 'none';
   });
 
   // enlaces a las pantallas de cola (se abren en pestaña nueva)

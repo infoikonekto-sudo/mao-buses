@@ -21,6 +21,23 @@ export function AuthProvider({ children }) {
             }
         }, 6000);
 
+        const fetchProfile = async (u) => {
+            if (!u) {
+                setProfile(null);
+                return;
+            }
+            try {
+                const { data: profileData } = await Promise.race([
+                    supabase.from('user_profiles').select('*').eq('user_id', u.id).maybeSingle(),
+                    new Promise((_, r) => setTimeout(() => r('timeout'), 3000))
+                ]).catch(() => ({ data: null }));
+
+                if (isMounted) setProfile(profileData);
+            } catch (err) {
+                console.error('❌ Error cargando perfil:', err);
+            }
+        };
+
         const initAuth = async () => {
             try {
                 // 1. Sesión inicial
@@ -28,16 +45,9 @@ export function AuthProvider({ children }) {
                 if (error) throw error;
 
                 const currentUser = session?.user ?? null;
-                setUser(currentUser);
-
-                if (currentUser) {
-                    // 2. Cargar perfil (con timeout interno)
-                    const { data: profileData } = await Promise.race([
-                        supabase.from('user_profiles').select('*').eq('user_id', currentUser.id).maybeSingle(),
-                        new Promise((_, r) => setTimeout(() => r('timeout'), 3000))
-                    ]).catch(() => ({ data: null }));
-
-                    if (isMounted) setProfile(profileData);
+                if (isMounted) {
+                    setUser(currentUser);
+                    if (currentUser) await fetchProfile(currentUser);
                 }
             } catch (err) {
                 console.error('❌ Error Auth:', err.message);
@@ -52,8 +62,16 @@ export function AuthProvider({ children }) {
 
         initAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (isMounted) setUser(session?.user ?? null);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            const currentUser = session?.user ?? null;
+            if (isMounted) {
+                setUser(currentUser);
+                if (currentUser) {
+                    await fetchProfile(currentUser);
+                } else {
+                    setProfile(null);
+                }
+            }
         });
 
         return () => {
