@@ -15,12 +15,12 @@ export default function UsersPage() {
 
     // Permisos por defecto
     const INITIAL_PERMISSIONS = {
-        dashboard: 'read',
-        qr: 'read',
-        alumnos: 'read',
-        bus: 'read',
-        historial: 'read',
-        analiticas: 'read',
+        dashboard: 'none',
+        qr: 'none',
+        alumnos: 'none',
+        bus: 'none',
+        historial: 'none',
+        analiticas: 'none',
         config: 'none',
         users: 'none'
     };
