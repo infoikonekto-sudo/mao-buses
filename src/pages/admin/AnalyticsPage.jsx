@@ -9,9 +9,11 @@ import {
     ArrowDownRight,
     Calendar
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import './AnalyticsPage.css';
 
 export default function AnalyticsPage() {
+    const { profile, profileLoading, initialized } = useAuth();
     const [stats, setStats] = useState({
         avgWaitTime: 0,
         peakHour: '--:--',
@@ -98,6 +100,16 @@ export default function AnalyticsPage() {
             setHourlyData(hourlyChartData);
         }
         setLoading(false);
+    }
+
+    if (!initialized || profileLoading) {
+        return (
+            <div className="analytics-loading">
+                <div className="spinner"></div>
+                <h1>Validando acceso...</h1>
+                <p>Configurando tus métricas de rendimiento.</p>
+            </div>
+        );
     }
 
     if (loading) return <div className="analytics-loading">Analizando datos...</div>;

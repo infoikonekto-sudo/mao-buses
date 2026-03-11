@@ -17,9 +17,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Componente para rutas protegidas
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, profileLoading } = useAuth();
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div style={{
         display: 'flex',

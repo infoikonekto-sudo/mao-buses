@@ -5,7 +5,7 @@ import { UserPlus, Shield, Trash2, Mail, Lock } from 'lucide-react';
 import './UsersPage.css';
 
 export default function UsersPage() {
-    const { profile } = useAuth();
+    const { profile, profileLoading, initialized } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
@@ -135,6 +135,16 @@ export default function UsersPage() {
         } finally {
             setLoading(false);
         }
+    }
+
+    if (!initialized || profileLoading) {
+        return (
+            <div className="users-loading">
+                <div className="spinner"></div>
+                <h1>Validando acceso...</h1>
+                <p>Por favor espera un momento mientras verificamos tus credenciales.</p>
+            </div>
+        );
     }
 
     if (profile?.role !== 'superadmin') {

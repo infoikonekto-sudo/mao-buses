@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [profileLoading, setProfileLoading] = useState(false);
     const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
@@ -24,9 +25,12 @@ export function AuthProvider({ children }) {
         const fetchProfile = async (u) => {
             if (!u) {
                 setProfile(null);
+                setProfileLoading(false);
                 localStorage.removeItem('mao_cached_profile');
                 return;
             }
+
+            setProfileLoading(true);
 
             // 1. Carga optimista desde caché local
             const cached = localStorage.getItem('mao_cached_profile');
@@ -75,16 +79,20 @@ export function AuthProvider({ children }) {
                     }
                 }
 
-                if (isMounted && profileData) {
-                    console.log('🎯 Perfil cargado exitosamente:', profileData.role);
-                    setProfile(profileData);
-                    localStorage.setItem('mao_cached_profile', JSON.stringify(profileData));
-                } else if (isMounted) {
-                    console.warn('⚠️ Usuario autenticado pero sin perfil en la base de datos.');
-                    setProfile(null);
+                if (isMounted) {
+                    if (profileData) {
+                        console.log('🎯 Perfil cargado exitosamente:', profileData.role);
+                        setProfile(profileData);
+                        localStorage.setItem('mao_cached_profile', JSON.stringify(profileData));
+                    } else {
+                        console.warn('⚠️ Usuario autenticado pero sin perfil en la base de datos.');
+                        setProfile(null);
+                    }
                 }
             } catch (err) {
                 console.error('❌ Error crítico en fetchProfile:', err);
+            } finally {
+                if (isMounted) setProfileLoading(false);
             }
         };
 
@@ -146,7 +154,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, profile, loading, logout, initialized }}>
+        <AuthContext.Provider value={{ user, profile, loading, profileLoading, logout, initialized }}>
             {children}
         </AuthContext.Provider>
     );

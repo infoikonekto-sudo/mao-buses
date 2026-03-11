@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
@@ -9,8 +10,12 @@ export default function DashboardPage() {
   const [filtroNivel, setFiltroNivel] = useState('');
   const [horaActual, setHoraActual] = useState('');
 
+  const { profile, profileLoading, initialized } = useAuth();
+
   useEffect(() => {
-    cargarRegistros();
+    if (initialized && !profileLoading && profile) {
+      cargarRegistros();
+    }
 
     // Reloj
     const interval = setInterval(() => {
@@ -137,6 +142,16 @@ export default function DashboardPage() {
         <div className="stat-bar">
           <div className="stat-fill" style={{ width: `${Math.min(trend, 100)}%`, background: color }} />
         </div>
+      </div>
+    );
+  }
+
+  if (!initialized || profileLoading) {
+    return (
+      <div className="dashboard-loading">
+        <div className="spinner"></div>
+        <h1>Validando acceso...</h1>
+        <p>Conectando con la base de datos central de Colegio MAO.</p>
       </div>
     );
   }
