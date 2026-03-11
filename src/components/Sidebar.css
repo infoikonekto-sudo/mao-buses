@@ -11,8 +11,19 @@
     margin: 0;
     z-index: 1000;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
 }
 
 .sidebar-brand {
@@ -24,22 +35,28 @@
 }
 
 .sidebar-close-btn {
-    display: none !important;
-    /* Oculto en desktop */
+    display: none;
     position: absolute;
     top: 15px;
     right: 15px;
     background: rgba(255, 255, 255, 0.1);
     border: none;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    /* Un poco más grande para facilitar el toque */
+    height: 40px;
     border-radius: 50%;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 1001;
+}
+
+@media (max-width: 1024px) {
+    .sidebar-close-btn {
+        display: flex !important;
+    }
 }
 
 .brand-icon {

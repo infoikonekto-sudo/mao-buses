@@ -13,7 +13,19 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: margin-left var(--t-normal);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 999;
 }
 
 @media (max-width: 1024px) {
@@ -21,12 +33,8 @@
     margin-left: 0 !important;
   }
 
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
+  .sidebar-overlay {
+    display: block;
   }
 }
 

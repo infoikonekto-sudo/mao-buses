@@ -199,7 +199,7 @@ export default function BusPage() {
             ) : (
               alumnosFiltrados.map((alumno) => (
                 <tr key={alumno.carnet} className={alumno.ausente ? 'row-absent' : ''}>
-                  <td>
+                  <td data-label="Alumno">
                     <div className="student-cell">
                       <div className="student-avatar">
                         {alumno.foto_url ? (
@@ -214,10 +214,10 @@ export default function BusPage() {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Grado / Sec">
                     <span className="grade-badge">{alumno.grado} - {alumno.seccion}</span>
                   </td>
-                  <td>
+                  <td data-label="Ruta">
                     <select
                       className="select-ruta"
                       value={alumno.ruta || ''}
@@ -230,7 +230,7 @@ export default function BusPage() {
                       ))}
                     </select>
                   </td>
-                  <td className="center">
+                  <td data-label="Ausente" className="center">
                     <input
                       type="checkbox"
                       className="check-absent"
@@ -239,7 +239,7 @@ export default function BusPage() {
                       onChange={(e) => updateField(alumno.carnet, 'ausente', e.target.checked)}
                     />
                   </td>
-                  <td>
+                  <td data-label="Cambio / Obs.">
                     <div className="edit-cell">
                       <input
                         type="text"
@@ -258,7 +258,7 @@ export default function BusPage() {
                       {saving === alumno.carnet && <span className="save-indicator">💾</span>}
                     </div>
                   </td>
-                  <td className="center">
+                  <td data-label="L-M" className="center">
                     <input
                       type="checkbox"
                       checked={alumno.act_l_m || false}
@@ -266,7 +266,7 @@ export default function BusPage() {
                       onChange={(e) => updateField(alumno.carnet, 'act_l_m', e.target.checked)}
                     />
                   </td>
-                  <td className="center">
+                  <td data-label="M-J" className="center">
                     <input
                       type="checkbox"
                       checked={alumno.act_m_j || false}
