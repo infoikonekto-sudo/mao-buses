@@ -114,7 +114,7 @@ export default function AnalyticsPage() {
         );
     }
 
-    if (user && !profile) {
+    if (initialized && user && !profile) {
         return (
             <div className="analytics-loading">
                 <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⚠️</div>

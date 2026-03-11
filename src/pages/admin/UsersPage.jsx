@@ -147,7 +147,7 @@ export default function UsersPage() {
         );
     }
 
-    if (user && !profile) {
+    if (initialized && user && !profile) {
         return (
             <div className="access-denied">
                 <Shield size={48} color="#f59e0b" />

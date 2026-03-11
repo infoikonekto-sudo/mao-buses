@@ -10,7 +10,7 @@ export default function DashboardPage() {
   const [filtroNivel, setFiltroNivel] = useState('');
   const [horaActual, setHoraActual] = useState('');
 
-  const { profile, profileLoading, initialized } = useAuth();
+  const { user, profile, profileLoading, initialized } = useAuth();
 
   useEffect(() => {
     if (initialized && !profileLoading && profile) {
@@ -156,7 +156,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (user && !profile) {
+  if (initialized && user && !profile) {
     return (
       <div className="dashboard-loading">
         <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⚠️</div>
