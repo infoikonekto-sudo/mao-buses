@@ -42,8 +42,8 @@ export function AuthProvider({ children }) {
             }
 
             try {
-                // 2. Fetch real desde Supabase (con reintentos leves)
-                const { data: profileData, error } = await supabase
+                // 2. Fetch real desde Supabase por ID
+                let { data: profileData, error } = await supabase
                     .from('user_profiles')
                     .select('*')
                     .eq('user_id', u.id)
@@ -51,13 +51,40 @@ export function AuthProvider({ children }) {
 
                 if (error) throw error;
 
+                // 3. AUTO-REPARACIÓN (Fallback por Email)
+                // Si no hay perfil por ID, intentamos buscar por email para re-vincular
+                if (!profileData && u.email) {
+                    console.log('🔍 Perfil no hallado por ID. Intentando recuperación por email:', u.email);
+                    const { data: fallbackData } = await supabase
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('email', u.email.toLowerCase())
+                        .maybeSingle();
+
+                    if (fallbackData) {
+                        console.log('✅ Perfil hallado por email. Re-vinculando ID...');
+                        // Actualizar el user_id en la DB para futuras sesiones
+                        const { data: updatedData, error: updateError } = await supabase
+                            .from('user_profiles')
+                            .update({ user_id: u.id, updated_at: new Date().toISOString() })
+                            .eq('email', u.email.toLowerCase())
+                            .select()
+                            .single();
+
+                        if (!updateError) profileData = updatedData;
+                    }
+                }
+
                 if (isMounted && profileData) {
+                    console.log('🎯 Perfil cargado exitosamente:', profileData.role);
                     setProfile(profileData);
                     localStorage.setItem('mao_cached_profile', JSON.stringify(profileData));
+                } else if (isMounted) {
+                    console.warn('⚠️ Usuario autenticado pero sin perfil en la base de datos.');
+                    setProfile(null);
                 }
             } catch (err) {
-                console.error('❌ Error cargando perfil:', err);
-                // Si falla el fetch pero tenemos caché, mantenemos el caché.
+                console.error('❌ Error crítico en fetchProfile:', err);
             }
         };
 
