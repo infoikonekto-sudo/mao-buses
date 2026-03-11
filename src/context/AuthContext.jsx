@@ -3,11 +3,11 @@ import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
 
-// Helper para timeouts de red
-const withTimeout = (promise, ms = 5000) => {
+// Helper para timeouts de red mejorado
+const withTimeout = (promise, opName = 'OP', ms = 10000) => {
     return Promise.race([
         promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_RED')), ms))
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_RED_${opName}`)), ms))
     ]);
 };
 
@@ -21,16 +21,15 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         let isMounted = true;
 
-        // 🔥 TEMPORIZADOR DE RESCATE TOTAL (6 segundos)
-        // Si en 6 segundos nada ha terminado, liberamos la UI a toda costa.
+        // 🔥 TEMPORIZADOR DE RESCATE TOTAL AMPLIADO (12 segundos)
         const rescueTimer = setTimeout(() => {
             if (isMounted && !initialized) {
-                console.warn('🚨 RESCATE TOTAL: Forzando desbloqueo de interfaz por bloqueo de red.');
+                console.warn('🚨 RESCATE TOTAL: Forzando desbloqueo por internet extremadamente lento.');
                 setLoading(false);
                 setInitialized(true);
-                setProfileLoading(false); // Liberar también la carga de perfil
+                setProfileLoading(false);
             }
-        }, 6000);
+        }, 12000);
 
         const fetchProfile = async (u) => {
             if (!u) {
@@ -42,16 +41,13 @@ export function AuthProvider({ children }) {
 
             setProfileLoading(true);
 
-            // 1. CARGA OPTIMISTA (Caché local) - Instantánea
+            // 1. CARGA OPTIMISTA (Caché local)
             const cached = localStorage.getItem('mao_cached_profile');
             if (cached) {
                 try {
                     const parsed = JSON.parse(cached);
                     if (parsed.user_id === u.id) {
-                        if (isMounted) {
-                            console.log('📦 Perfil cargado desde caché (optimista)');
-                            setProfile(parsed);
-                        }
+                        if (isMounted) setProfile(parsed);
                     }
                 } catch (e) {
                     console.error('Error parseando caché:', e);
@@ -59,31 +55,32 @@ export function AuthProvider({ children }) {
             }
 
             try {
-                // 2. FETCH CON TIMEOUT (5 segundos máx)
-                console.log('📡 Iniciando fetch de perfil con blindaje de tiempo...');
+                // 2. FETCH CON TIMEOUT AMPLIADO (10 segundos máx)
                 const { data: profileData, error } = await withTimeout(
                     supabase
                         .from('user_profiles')
                         .select('*')
                         .eq('user_id', u.id)
                         .maybeSingle(),
-                    5000
+                    'FETCH_ID',
+                    10000
                 );
 
                 if (error) throw error;
 
                 let finalProfile = profileData;
 
-                // 3. AUTO-REPARACIÓN (Por Email) si el ID no vincula
+                // 3. AUTO-REPARACIÓN (Por Email)
                 if (!finalProfile && u.email) {
-                    console.log('🔍 Re-vinculando perfil por email:', u.email);
+                    console.log('🔍 Buscando perfil por email para re-vincular...');
                     const { data: fallbackData } = await withTimeout(
                         supabase
                             .from('user_profiles')
                             .select('*')
                             .eq('email', u.email.toLowerCase())
                             .maybeSingle(),
-                        3000
+                        'FETCH_EMAIL',
+                        7000
                     );
 
                     if (fallbackData) {
@@ -94,7 +91,8 @@ export function AuthProvider({ children }) {
                                 .eq('email', u.email.toLowerCase())
                                 .select()
                                 .single(),
-                            3000
+                            'UPDATE_ID',
+                            7000
                         );
                         if (!updateError) finalProfile = updatedData;
                     }
@@ -102,26 +100,24 @@ export function AuthProvider({ children }) {
 
                 if (isMounted) {
                     if (finalProfile) {
-                        console.log('🎯 Vínculo de perfil verificado:', finalProfile.role);
                         setProfile(finalProfile);
                         localStorage.setItem('mao_cached_profile', JSON.stringify(finalProfile));
-                    } else {
-                        console.warn('⚠️ No se encontró perfil para este usuario.');
                     }
                 }
             } catch (err) {
-                console.error('❌ Error en FETCH_PROFILE (posible timeout):', err.message);
-                // Si falla por timeout, mantenemos el caché si existe
+                console.warn(`⚠️ Aviso de Red: ${err.message}. El sistema usará el caché si está disponible.`);
             } finally {
-                if (isMounted) {
-                    setProfileLoading(false);
-                }
+                if (isMounted) setProfileLoading(false);
             }
         };
 
         const initAuth = async () => {
             try {
-                const { data: { session }, error } = await withTimeout(supabase.auth.getSession(), 5000);
+                const { data: { session }, error } = await withTimeout(
+                    supabase.auth.getSession(),
+                    'SESSION',
+                    10000
+                );
                 if (error) throw error;
 
                 const currentUser = session?.user ?? null;
@@ -134,7 +130,7 @@ export function AuthProvider({ children }) {
                     }
                 }
             } catch (err) {
-                console.error('❌ Error en INIT_AUTH:', err.message);
+                console.error('❌ Error crítico en inicio de sesión:', err.message);
             } finally {
                 if (isMounted) {
                     setLoading(false);
