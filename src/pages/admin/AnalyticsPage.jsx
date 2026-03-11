@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import './AnalyticsPage.css';
 
 export default function AnalyticsPage() {
-    const { profile, profileLoading, initialized } = useAuth();
+    const { user, profile, profileLoading, initialized } = useAuth();
     const [stats, setStats] = useState({
         avgWaitTime: 0,
         peakHour: '--:--',
@@ -26,8 +26,10 @@ export default function AnalyticsPage() {
     const [filtroNivel, setFiltroNivel] = useState('todos');
 
     useEffect(() => {
-        fetchAnalyticsData();
-    }, [filtroNivel]);
+        if (initialized && !profileLoading && profile) {
+            fetchAnalyticsData();
+        }
+    }, [filtroNivel, initialized, profileLoading, profile]);
 
     async function fetchAnalyticsData() {
         setLoading(true);
@@ -108,6 +110,19 @@ export default function AnalyticsPage() {
                 <div className="spinner"></div>
                 <h1>Validando acceso...</h1>
                 <p>Configurando tus métricas de rendimiento.</p>
+            </div>
+        );
+    }
+
+    if (user && !profile) {
+        return (
+            <div className="analytics-loading">
+                <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⚠️</div>
+                <h1>Dificultad de Conexión</h1>
+                <p>No pudimos cargar tus métricas de administrador. Reintenta por favor.</p>
+                <button onClick={() => window.location.reload()} className="filter-btn active" style={{ marginTop: '20px', padding: '12px 24px' }}>
+                    🔄 Reintentar Conexión
+                </button>
             </div>
         );
     }

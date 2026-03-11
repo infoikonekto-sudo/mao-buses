@@ -5,7 +5,7 @@ import { UserPlus, Shield, Trash2, Mail, Lock } from 'lucide-react';
 import './UsersPage.css';
 
 export default function UsersPage() {
-    const { profile, profileLoading, initialized } = useAuth();
+    const { user, profile, profileLoading, initialized } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
@@ -143,6 +143,19 @@ export default function UsersPage() {
                 <div className="spinner"></div>
                 <h1>Validando acceso...</h1>
                 <p>Por favor espera un momento mientras verificamos tus credenciales.</p>
+            </div>
+        );
+    }
+
+    if (user && !profile) {
+        return (
+            <div className="access-denied">
+                <Shield size={48} color="#f59e0b" />
+                <h1>Dificultad de Conexión</h1>
+                <p>No logramos cargar tus permisos. Por favor, intenta recargar la página o revisa tu conexión a internet.</p>
+                <button onClick={() => window.location.reload()} className="btn-save" style={{ marginTop: '20px' }}>
+                    🔄 Reintentar Conexión
+                </button>
             </div>
         );
     }

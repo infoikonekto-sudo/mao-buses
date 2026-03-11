@@ -156,6 +156,19 @@ export default function DashboardPage() {
     );
   }
 
+  if (user && !profile) {
+    return (
+      <div className="dashboard-loading">
+        <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⚠️</div>
+        <h1>Dificultad de Conexión</h1>
+        <p>No logramos recuperar tu perfil de administrador. Por favor, reintenta.</p>
+        <button onClick={() => window.location.reload()} className="btn-refresh" style={{ marginTop: '20px' }}>
+          🔄 Reintentar Conexión
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
