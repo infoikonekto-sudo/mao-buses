@@ -20,8 +20,10 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
     { id: 'config', label: 'Configuración', icon: '⚙️', path: '/admin/config', permission: 'config' },
   ];
 
+  const isProfileLoading = user && !profile;
+
   const filteredRoutes = routes.filter(route => {
-    // Si no hay perfil, no mostrar nada administrativo por seguridad
+    // Si no hay perfil, pero hay usuario, ocultamos rutas admin temporalmente
     if (!profile) return false;
 
     // Superadmin tiene acceso a todo
@@ -68,6 +70,12 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
 
       {/* Nav */}
       <nav className="sidebar-nav">
+        {isProfileLoading && (
+          <div className="nav-loading-profiles">
+            <div className="spinner-mini"></div>
+            <span>Validando acceso...</span>
+          </div>
+        )}
         {filteredRoutes.map((route) => (
           <button
             key={route.id}

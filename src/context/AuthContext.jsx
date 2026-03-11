@@ -24,30 +24,56 @@ export function AuthProvider({ children }) {
         const fetchProfile = async (u) => {
             if (!u) {
                 setProfile(null);
+                localStorage.removeItem('mao_cached_profile');
                 return;
             }
-            try {
-                const { data: profileData } = await Promise.race([
-                    supabase.from('user_profiles').select('*').eq('user_id', u.id).maybeSingle(),
-                    new Promise((_, r) => setTimeout(() => r('timeout'), 3000))
-                ]).catch(() => ({ data: null }));
 
-                if (isMounted) setProfile(profileData);
+            // 1. Carga optimista desde caché local
+            const cached = localStorage.getItem('mao_cached_profile');
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (parsed.user_id === u.id) {
+                        if (isMounted) setProfile(parsed);
+                    }
+                } catch (e) {
+                    console.error('Error parseando caché:', e);
+                }
+            }
+
+            try {
+                // 2. Fetch real desde Supabase (con reintentos leves)
+                const { data: profileData, error } = await supabase
+                    .from('user_profiles')
+                    .select('*')
+                    .eq('user_id', u.id)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (isMounted && profileData) {
+                    setProfile(profileData);
+                    localStorage.setItem('mao_cached_profile', JSON.stringify(profileData));
+                }
             } catch (err) {
                 console.error('❌ Error cargando perfil:', err);
+                // Si falla el fetch pero tenemos caché, mantenemos el caché.
             }
         };
 
         const initAuth = async () => {
             try {
-                // 1. Sesión inicial
                 const { data: { session }, error } = await supabase.auth.getSession();
                 if (error) throw error;
 
                 const currentUser = session?.user ?? null;
                 if (isMounted) {
                     setUser(currentUser);
-                    if (currentUser) await fetchProfile(currentUser);
+                    if (currentUser) {
+                        await fetchProfile(currentUser);
+                    } else {
+                        localStorage.removeItem('mao_cached_profile');
+                    }
                 }
             } catch (err) {
                 console.error('❌ Error Auth:', err.message);
@@ -62,14 +88,15 @@ export function AuthProvider({ children }) {
 
         initAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             const currentUser = session?.user ?? null;
             if (isMounted) {
                 setUser(currentUser);
                 if (currentUser) {
                     await fetchProfile(currentUser);
-                } else {
+                } else if (event === 'SIGNED_OUT') {
                     setProfile(null);
+                    localStorage.removeItem('mao_cached_profile');
                 }
             }
         });

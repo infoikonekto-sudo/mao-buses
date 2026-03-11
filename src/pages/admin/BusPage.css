@@ -64,8 +64,8 @@
 }
 
 .bus-toolbar {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
@@ -301,6 +301,121 @@
   padding: 60px !important;
   color: #94a3b8;
   font-style: italic;
+}
+
+/* 📱 Mobile Optimized Styles (iPhone / Samsung) */
+@media (max-width: 1024px) {
+  .bus-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .header-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .stat-mini {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .bus-container {
+    padding: 16px;
+  }
+
+  .bus-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    flex-direction: column;
+  }
+
+  .select-filter {
+    width: 100%;
+  }
+
+  /* Transformation: Table to Cards */
+  .bus-table,
+  .bus-table thead,
+  .bus-table tbody,
+  .bus-table th,
+  .bus-table td,
+  .bus-table tr {
+    display: block;
+  }
+
+  .bus-table thead {
+    display: none;
+    /* Hide headers on mobile */
+  }
+
+  .bus-table tr {
+    margin-bottom: 16px;
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid #f1f5f9 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  }
+
+  .bus-table td {
+    padding: 10px 0;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+  }
+
+  .bus-table td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: 700;
+    color: #64748b;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .bus-table td[data-label="Alumno"] {
+    display: block;
+    text-align: left;
+    border-bottom: 2px solid #f8fafc;
+    margin-bottom: 8px;
+    padding-bottom: 16px;
+  }
+
+  .bus-table td[data-label="Alumno"]::before {
+    display: none;
+  }
+
+  .student-cell {
+    gap: 16px;
+  }
+
+  .student-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+  }
+
+  .student-name .name {
+    font-size: 1.1rem;
+  }
+
+  .select-ruta,
+  .input-cambio {
+    max-width: 200px;
+  }
+
+  .check-absent {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 .bus-legend {
