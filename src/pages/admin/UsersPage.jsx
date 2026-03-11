@@ -274,23 +274,23 @@ export default function UsersPage() {
                     <tbody>
                         {users.map(u => (
                             <tr key={u.id}>
-                                <td>
+                                <td data-label="Email">
                                     <div className="user-info">
                                         <span className="email">{u.email}</span>
                                     </div>
                                 </td>
-                                <td>
+                                <td data-label="Rol">
                                     <span className={`role-badge ${u.role}`}>{u.role}</span>
                                 </td>
-                                <td>
+                                <td data-label="Permisos">
                                     <div className="permissions-summary">
                                         {Object.entries(u.permissions || {}).map(([mod, p]) => (
                                             p !== 'none' && <span key={mod} className={`perm-tag ${p}`}>{mod}</span>
                                         ))}
                                     </div>
                                 </td>
-                                <td>{new Date(u.created_at).toLocaleDateString()}</td>
-                                <td>
+                                <td data-label="Registro">{new Date(u.created_at).toLocaleDateString()}</td>
+                                <td data-label="Acciones">
                                     <button className="btn-delete" onClick={() => alert('Próximamente...')}>
                                         <Trash2 size={16} />
                                     </button>

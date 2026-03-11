@@ -153,7 +153,9 @@
     box-shadow: 0 15px 30px -8px rgba(15, 42, 74, 0.4);
 }
 
-@media (max-width: 640px) {
+/* ─── Mobile Optimizado (iPhone / Samsung) ─── */
+
+@media (max-width: 768px) {
     .users-container {
         padding: 16px;
     }
@@ -161,31 +163,154 @@
     .users-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 20px;
-        text-align: center;
+        gap: 16px;
+    }
+
+    .users-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .btn-add-user {
+        justify-content: center;
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    /* ─ Formulario de nuevo usuario ─ */
+    .user-form {
+        padding: 20px;
+        gap: 24px;
     }
 
     .form-sections {
         grid-template-columns: 1fr;
+        gap: 24px;
     }
 
+    /* ─ Matriz de permisos en modo columna (más legible en móvil) ─ */
     .permissions-grid-header {
-        font-size: 0.65rem;
-        padding: 10px 4px;
+        display: none;
+        /* Ocultamos el header de tabla */
     }
 
     .permission-row {
-        padding: 10px 4px;
-        gap: 4px;
+        display: flex;
+        flex-direction: column;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 10px;
+        gap: 12px;
     }
 
     .permission-row .mod-label {
-        font-size: 0.85rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0F2A4A;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 8px;
+    }
+
+    /* Radio buttons en fila horizontal con label visible */
+    .permission-row .radio-options {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
     }
 
     .permission-row input[type="radio"] {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
+        accent-color: #2D7DD2;
+        justify-self: unset;
+    }
+
+    .btn-save-user {
+        font-size: 1rem;
+        padding: 14px;
+    }
+
+    /* ─ Lista de usuarios: tabla → tarjetas ─ */
+    .users-list table,
+    .users-list thead,
+    .users-list tbody,
+    .users-list th,
+    .users-list td,
+    .users-list tr {
+        display: block;
+    }
+
+    .users-list thead {
+        display: none;
+    }
+
+    .users-list tr {
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .users-list td {
+        padding: 8px 0;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .users-list td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+    }
+
+    /* Email: mostrar completo arriba */
+    .users-list td[data-label="Email"] {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0F2A4A;
+        border-bottom: 1px solid #f8fafc;
+        padding-bottom: 12px;
+        margin-bottom: 4px;
+    }
+
+    .users-list td[data-label="Email"]::before {
+        display: none;
+    }
+
+    .permissions-summary {
+        justify-content: flex-end;
+    }
+
+    .btn-delete {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .users-container {
+        padding: 12px;
+    }
+
+    .permission-row {
+        padding: 12px;
+    }
+
+    .permission-row .mod-label {
+        font-size: 0.9rem;
     }
 }
 
