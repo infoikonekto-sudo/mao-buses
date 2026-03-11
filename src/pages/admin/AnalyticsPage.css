@@ -5,11 +5,18 @@
 
 .analytics-header {
   margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .analytics-header h1 {
-  font-size: 2rem;
-  color: #0f172a;
+  font-size: 2.5rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  color: #0F2A4A;
   margin-bottom: 8px;
 }
 
@@ -48,14 +55,33 @@
   justify-content: center;
 }
 
-.bg-blue-light { background: #eff6ff; }
-.bg-purple-light { background: #f5f3ff; }
-.bg-green-light { background: #f0fdf4; }
+.bg-blue-light {
+  background: #eff6ff;
+}
 
-.text-blue { color: #3b82f6; }
-.text-purple { color: #7c3aed; }
-.text-green { color: #10b981; }
-.text-orange { color: #f59e0b; }
+.bg-purple-light {
+  background: #f5f3ff;
+}
+
+.bg-green-light {
+  background: #f0fdf4;
+}
+
+.text-blue {
+  color: #3b82f6;
+}
+
+.text-purple {
+  color: #7c3aed;
+}
+
+.text-green {
+  color: #10b981;
+}
+
+.text-orange {
+  color: #f59e0b;
+}
 
 .stat-content {
   flex: 1;
@@ -184,8 +210,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .analytics-loading {
@@ -195,4 +228,53 @@
   height: 400px;
   color: #64748b;
   font-style: italic;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+}
+
+/* Filtros Estilo Premium */
+.analytics-filters {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Outfit', sans-serif;
+}
+
+.filter-btn:hover {
+  border-color: #2D7DD2;
+  color: #2D7DD2;
+  background: #f8fafc;
+}
+
+.filter-btn.active {
+  background: #0F2A4A;
+  color: white;
+  border-color: #0F2A4A;
+  box-shadow: 0 4px 12px rgba(15, 42, 74, 0.2);
+}
+
+@media (max-width: 768px) {
+  .analytics-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analytics-filters {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .filter-btn {
+    white-space: nowrap;
+  }
 }

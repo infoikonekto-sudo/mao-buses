@@ -69,7 +69,10 @@ export default function DashboardPage() {
       const hoy = new Date().toISOString().split('T')[0];
       const { error } = await supabase
         .from('cola_dia')
-        .update({ estado: 'entregado' })
+        .update({
+          estado: 'entregado',
+          hora_entrega: new Date().toISOString()
+        })
         .eq('fecha_dia', hoy)
         .eq('estado', 'esperando');
 

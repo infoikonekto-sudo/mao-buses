@@ -21,19 +21,26 @@ export default function AnalyticsPage() {
     });
     const [hourlyData, setHourlyData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filtroNivel, setFiltroNivel] = useState('todos');
 
     useEffect(() => {
         fetchAnalyticsData();
-    }, []);
+    }, [filtroNivel]);
 
     async function fetchAnalyticsData() {
         setLoading(true);
         const hoy = new Date().toISOString().split('T')[0];
 
-        const { data: registros, error } = await supabase
+        let query = supabase
             .from('cola_dia')
-            .select('hora_escaneo, created_at, estado, nivel')
+            .select('hora_escaneo, hora_entrega, estado, nivel')
             .eq('fecha_dia', hoy);
+
+        if (filtroNivel !== 'todos') {
+            query = query.eq('nivel', filtroNivel);
+        }
+
+        const { data: registros, error } = await query;
 
         if (error) {
             console.error('Error fetching analytics:', error);
@@ -53,9 +60,9 @@ export default function AnalyticsPage() {
             let countEntregados = 0;
 
             registros.forEach(r => {
-                if (r.estado === 'entregado') {
+                if (r.estado === 'entregado' && r.hora_entrega && r.hora_escaneo) {
                     const escaneo = new Date(r.hora_escaneo).getTime();
-                    const entrega = new Date(r.created_at).getTime(); // Usando created_at como proxy de actualización
+                    const entrega = new Date(r.hora_entrega).getTime();
                     const diff = Math.max(0, (entrega - escaneo) / (1000 * 60)); // minutos
                     totalWait += diff;
                     countEntregados++;
@@ -98,8 +105,21 @@ export default function AnalyticsPage() {
     return (
         <div className="analytics-container">
             <div className="analytics-header">
-                <h1>📈 Analíticas de Salida</h1>
-                <p className="subtitle">Resumen de eficiencia operativa para el día de hoy</p>
+                <div>
+                    <h1>📈 Analíticas de Salida</h1>
+                    <p className="subtitle">Resumen de eficiencia operativa para el día de hoy</p>
+                </div>
+                <div className="analytics-filters">
+                    {['todos', 'preprimaria', 'primaria', 'secundaria'].map((nivel) => (
+                        <button
+                            key={nivel}
+                            className={`filter-btn ${filtroNivel === nivel ? 'active' : ''}`}
+                            onClick={() => setFiltroNivel(nivel)}
+                        >
+                            {nivel === 'todos' ? 'Todos' : nivel.charAt(0).toUpperCase() + nivel.slice(1)}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="stats-grid">
