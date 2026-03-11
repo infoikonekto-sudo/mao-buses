@@ -1,73 +1,65 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext(null);
 const CACHE_KEY = 'mao_profile_v2';
 
-// ─── Helpers de cache ──────────────────────────────────────────────────────
-
+// ─── Cache helpers ──────────────────────────────────────────────────────────
 function readCache(userId) {
     try {
         const raw = localStorage.getItem(CACHE_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         return parsed?.user_id === userId ? parsed : null;
-    } catch {
-        return null;
-    }
+    } catch { return null; }
 }
-
-function writeCache(profile) {
-    try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(profile));
-    } catch { /* sin espacio */ }
+function writeCache(p) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(p)); } catch { }
 }
-
 function clearCache() {
     localStorage.removeItem(CACHE_KEY);
 }
 
-// ─── Fetch de perfil (sin timeout arbitrario) ──────────────────────────────
-// Supabase ya maneja sus propios timeouts de red internamente.
-// Usando timeouts arbitrarios creamos TIMEOUT_RED_SESSION falsos.
-
-async function fetchProfileFromDB(userId, email) {
-    // Intento 1: por user_id (caso normal y más rápido)
-    const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-    if (!error && data) return data;
-
-    // Intento 2: auto-reparación por email si el user_id está desincronizado
-    if (email) {
-        const { data: byEmail, error: errEmail } = await supabase
+// ─── Fetch de perfil en background (sin bloquear nada) ─────────────────────
+async function fetchProfileBg(userId, email, onSuccess) {
+    try {
+        const { data, error } = await supabase
             .from('user_profiles')
             .select('*')
-            .eq('email', email.toLowerCase())
+            .eq('user_id', userId)
             .maybeSingle();
 
-        if (!errEmail && byEmail) {
-            // Re-vincula el user_id en la base de datos
-            const { data: patched } = await supabase
-                .from('user_profiles')
-                .update({ user_id: userId, updated_at: new Date().toISOString() })
-                .eq('email', email.toLowerCase())
-                .select()
-                .single();
-
-            return patched || byEmail;
+        if (!error && data) {
+            onSuccess(data);
+            return;
         }
-    }
 
-    if (error) console.warn('⚠️ Fetch de perfil:', error.message);
-    return null;
+        // Auto-reparación: buscar por email si el ID no coincide
+        if (email) {
+            const { data: byEmail } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('email', email.toLowerCase())
+                .maybeSingle();
+
+            if (byEmail) {
+                // Actualizar el user_id para futuras sesiones
+                const { data: patched } = await supabase
+                    .from('user_profiles')
+                    .update({ user_id: userId, updated_at: new Date().toISOString() })
+                    .eq('email', email.toLowerCase())
+                    .select()
+                    .single();
+
+                onSuccess(patched || byEmail);
+            }
+        }
+    } catch (err) {
+        console.warn('⚠️ Fetch perfil bg:', err.message);
+    }
 }
 
 // ─── Provider ──────────────────────────────────────────────────────────────
-
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
@@ -75,106 +67,82 @@ export function AuthProvider({ children }) {
     const [profileLoading, setProfileLoading] = useState(false);
     const [initialized, setInitialized] = useState(false);
 
-    // Evita llamadas paralelas de fetchProfile
-    const fetchingRef = useRef(false);
-    const initializedRef = useRef(false);
-
     useEffect(() => {
         let cancelled = false;
+        let profileFetching = false;
 
-        const loadProfile = async (authUser) => {
-            if (!authUser) {
-                setProfile(null);
-                setProfileLoading(false);
-                clearCache();
-                return;
-            }
+        // ─── Función para iniciar la carga de perfil de forma no-bloqueante
+        const startProfileLoad = (authUser) => {
+            if (!authUser || profileFetching) return;
+            profileFetching = true;
 
-            if (fetchingRef.current) return;
-            fetchingRef.current = true;
-            setProfileLoading(true);
-
-            // 1. Mostrar caché inmediatamente sin esperar la red
+            // 1. Mostrar caché inmediatamente (0ms de espera)
             const cached = readCache(authUser.id);
-            if (cached && !cancelled) {
-                setProfile(cached);
-            }
+            if (cached && !cancelled) setProfile(cached);
+            if (!cancelled) setProfileLoading(true);
 
-            // 2. Actualizar desde la DB en background
-            try {
-                const fresh = await fetchProfileFromDB(authUser.id, authUser.email);
+            // 2. Fetch en background (sin bloquear la UI)
+            fetchProfileBg(authUser.id, authUser.email, (fresh) => {
                 if (!cancelled) {
-                    if (fresh) {
-                        setProfile(fresh);
-                        writeCache(fresh);
-                    } else if (!cached) {
-                        setProfile(null); // Solo resetear si tampoco había caché
-                    }
-                    // Si no hay fresh pero sí había caché, el caché sigue activo
+                    setProfile(fresh);
+                    writeCache(fresh);
                 }
-            } catch (err) {
-                console.warn('⚠️ Perfil en modo caché:', err.message);
-            } finally {
+            }).finally(() => {
                 if (!cancelled) {
                     setProfileLoading(false);
-                    fetchingRef.current = false;
+                    profileFetching = false;
                 }
-            }
+            });
         };
 
-        // ─────────────────────────────────────────────────────────────────
-        // ESTRATEGIA PRINCIPAL: onAuthStateChange como fuente de verdad.
-        //
-        // A diferencia de supabase.auth.getSession(), onAuthStateChange
-        // dispara INITIAL_SESSION usando el token del localStorage SIN hacer
-        // una llamada de red, lo que elimina TIMEOUT_RED_SESSION.
-        // ─────────────────────────────────────────────────────────────────
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        // ─── INICIALIZACIÓN: getSession() SIN timeout artificial ──────────
+        // getSession() lee de localStorage si el token es válido (muy rápido).
+        // Solo hace red si el token expiró y necesita refrescarse.
+        supabase.auth.getSession().then(({ data: { session } }) => {
             if (cancelled) return;
-
             const currentUser = session?.user ?? null;
-
-            if (event === 'SIGNED_OUT') {
-                setUser(null);
-                setProfile(null);
-                clearCache();
-                fetchingRef.current = false;
-                if (!initializedRef.current) {
-                    setLoading(false);
-                    setInitialized(true);
-                    initializedRef.current = true;
-                }
-                return;
-            }
-
             setUser(currentUser);
-
-            // Marcar la app como inicializada al recibir el primer evento
-            if (!initializedRef.current) {
+            setLoading(false);
+            setInitialized(true);
+            if (currentUser) startProfileLoad(currentUser);
+        }).catch((err) => {
+            console.error('Error getSession:', err.message);
+            if (!cancelled) {
                 setLoading(false);
                 setInitialized(true);
-                initializedRef.current = true;
-            }
-
-            if (currentUser) {
-                await loadProfile(currentUser);
-            } else {
-                setProfile(null);
-                setProfileLoading(false);
-                clearCache();
             }
         });
 
-        // Safety net: si onAuthStateChange no dispara en 8s (router offline total)
+        // ─── CAMBIOS POSTERIORES: onAuthStateChange para LOGIN/LOGOUT ────
+        // CRÍTICO: callback NO async para evitar deadlocks en Supabase v2
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (cancelled) return;
+            const currentUser = session?.user ?? null;
+
+            setUser(currentUser);
+
+            if (event === 'SIGNED_IN') {
+                profileFetching = false; // Reset para poder cargar de nuevo
+                startProfileLoad(currentUser);
+            } else if (event === 'SIGNED_OUT') {
+                setProfile(null);
+                setProfileLoading(false);
+                clearCache();
+                profileFetching = false;
+            } else if (event === 'TOKEN_REFRESHED' && currentUser) {
+                // El token se refrescó, verificar si el perfil sigue cargado
+                if (!profile) startProfileLoad(currentUser);
+            }
+        });
+
+        // ─── Safety-net: si getSession() no responde en 5s (offline total) ─
         const safetyNet = setTimeout(() => {
-            if (!cancelled && !initializedRef.current) {
-                console.warn('🛡️ Safety-net: red completamente inaccesible.');
+            if (!cancelled && !initialized) {
+                console.warn('🛡️ Safety-net activado: sin respuesta de red.');
                 setLoading(false);
                 setInitialized(true);
-                setProfileLoading(false);
-                initializedRef.current = true;
             }
-        }, 8000);
+        }, 5000);
 
         return () => {
             cancelled = true;
@@ -185,15 +153,9 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         clearCache();
-        fetchingRef.current = false;
-        try {
-            await supabase.auth.signOut();
-        } catch (e) {
-            console.error('Error al cerrar sesión:', e);
-        } finally {
-            setUser(null);
-            setProfile(null);
-        }
+        try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+        setUser(null);
+        setProfile(null);
     };
 
     return (
