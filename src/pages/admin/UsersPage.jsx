@@ -66,52 +66,74 @@ export default function UsersPage() {
         }
 
         try {
-            console.log('🔄 Intentando crear usuario:', newEmail);
-            // 1. Crear usuario en Auth
-            const { data, error: authError } = await supabase.auth.signUp({
-                email: newEmail,
-                password: newPassword,
-            });
+            setLoading(true);
+            console.log('🔍 Buscando si el perfil ya existe para:', newEmail);
 
-            if (authError) throw authError;
+            // 1. Verificar si ya existe un perfil para este correo
+            const { data: existingProfile, error: searchError } = await supabase
+                .from('user_profiles')
+                .select('user_id')
+                .eq('email', newEmail.toLowerCase())
+                .maybeSingle();
 
-            // Si data.user es null pero no hay error, es probable que ya exista
-            const user = data?.user;
-            if (!user) {
-                // Supabase a veces retorna éxito sin user si el correo ya está registrado (por seguridad)
-                throw new Error('El correo ya está registrado o requiere confirmación manual en Supabase.');
+            if (searchError) console.warn('Aviso búsqueda:', searchError);
+
+            let targetUserId = existingProfile?.user_id;
+
+            if (!targetUserId) {
+                console.log('🆕 No se encontró perfil previo. Intentando crear en Auth...');
+                // 2. Intentar crear en Auth si no hay perfil previo
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: newEmail.toLowerCase(),
+                    password: newPassword,
+                });
+
+                if (authError) throw authError;
+
+                const user = authData?.user;
+                if (!user || (!user.identities && !user.app_metadata)) {
+                    // Si no hay user o está vacío, Supabase está protegiendo una cuenta existente
+                    throw new Error('Este correo ya está registrado en el sistema. Si no aparece en la lista, el usuario debe confirmar su correo o un administrador debe gestionar su cuenta desde el panel de Supabase.');
+                }
+
+                targetUserId = user.id;
+                console.log('✅ Usuario Auth creado:', targetUserId);
+            } else {
+                console.log('♻️ Reutilizando ID de usuario existente:', targetUserId);
             }
 
-            console.log('✅ Usuario Auth creado/detectado:', user.id);
-
-            // 2. Crear o actualizar perfil en user_profiles (upsert para evitar 409)
+            // 3. Upsert en user_profiles (Usamos user_id como clave de conflicto)
             const { error: profileError } = await supabase
                 .from('user_profiles')
                 .upsert({
-                    user_id: user.id,
-                    email: newEmail,
+                    user_id: targetUserId,
+                    email: newEmail.toLowerCase(),
                     role: newRole,
                     permissions: permissions,
                     updated_at: new Date().toISOString()
                 }, {
-                    onConflict: 'user_id',
-                    ignoreDuplicates: false
+                    onConflict: 'user_id'
                 });
 
             if (profileError) {
-                console.error('❌ Error de perfil:', profileError);
+                // Capturar específicamente el error de FK (23503)
+                if (profileError.code === '23503') {
+                    throw new Error('Conflicto de Identidad (FK): El correo ya existe en Supabase Auth pero no tiene un perfil vinculado. Por favor, elimina al usuario de la sección "Authentication" en Supabase e intenta de nuevo.');
+                }
                 throw profileError;
             }
 
-            alert('Usuario gestionado correctamente. Si es nuevo, debe confirmar su correo.');
+            alert('Usuario gestionado correctamente (Perfil creado/actualizado).');
             setIsAdding(false);
             setNewEmail('');
             setNewPassword('');
             setPermissions(INITIAL_PERMISSIONS);
             fetchUsers();
         } catch (err) {
-            console.error('❌ Error en handleCreateUser:', err);
-            alert('Error: ' + (err.message || 'Ocurrió un error inesperado al crear el usuario.'));
+            console.error('❌ Error detallado:', err);
+            alert('Aviso: ' + (err.message || 'Error inesperado.'));
+        } finally {
+            setLoading(false);
         }
     }
 
