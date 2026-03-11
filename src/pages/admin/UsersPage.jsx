@@ -60,37 +60,58 @@ export default function UsersPage() {
 
     async function handleCreateUser(e) {
         e.preventDefault();
-        if (!newEmail || !newPassword) return;
+        if (!newEmail || !newPassword) {
+            alert('Por favor completa todos los campos.');
+            return;
+        }
 
         try {
+            console.log('🔄 Intentando crear usuario:', newEmail);
             // 1. Crear usuario en Auth
-            const { data: { user }, error: authError } = await supabase.auth.signUp({
+            const { data, error: authError } = await supabase.auth.signUp({
                 email: newEmail,
                 password: newPassword,
             });
 
             if (authError) throw authError;
 
-            // 2. Crear perfil en user_profiles con la ponderación de permisos
+            // Si data.user es null pero no hay error, es probable que ya exista
+            const user = data?.user;
+            if (!user) {
+                // Supabase a veces retorna éxito sin user si el correo ya está registrado (por seguridad)
+                throw new Error('El correo ya está registrado o requiere confirmación manual en Supabase.');
+            }
+
+            console.log('✅ Usuario Auth creado/detectado:', user.id);
+
+            // 2. Crear o actualizar perfil en user_profiles (upsert para evitar 409)
             const { error: profileError } = await supabase
                 .from('user_profiles')
-                .insert({
+                .upsert({
                     user_id: user.id,
                     email: newEmail,
                     role: newRole,
-                    permissions: permissions
+                    permissions: permissions,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'user_id',
+                    ignoreDuplicates: false
                 });
 
-            if (profileError) throw profileError;
+            if (profileError) {
+                console.error('❌ Error de perfil:', profileError);
+                throw profileError;
+            }
 
-            alert('Usuario creado con éxito. Debe confirmar su correo.');
+            alert('Usuario gestionado correctamente. Si es nuevo, debe confirmar su correo.');
             setIsAdding(false);
             setNewEmail('');
             setNewPassword('');
             setPermissions(INITIAL_PERMISSIONS);
             fetchUsers();
         } catch (err) {
-            alert('Error: ' + err.message);
+            console.error('❌ Error en handleCreateUser:', err);
+            alert('Error: ' + (err.message || 'Ocurrió un error inesperado al crear el usuario.'));
         }
     }
 
