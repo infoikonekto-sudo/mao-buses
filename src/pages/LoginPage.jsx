@@ -8,7 +8,7 @@ import '../styles/LoginPage.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,13 +22,21 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const technicalEmail = username.includes('@') ? username : `${username.toLowerCase().trim()}@roosevelt.edu`;
+
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: technicalEmail,
         password,
       });
 
       if (authError) {
-        setError(authError.message || 'Error al iniciar sesión');
+        let errorMsg = authError.message;
+        if (errorMsg.includes('Email not confirmed')) {
+          errorMsg = 'El correo no ha sido confirmado. Por favor, desactiva "Confirm Email" en Supabase.';
+        } else if (errorMsg.includes('Invalid login credentials')) {
+          errorMsg = 'Usuario o contraseña incorrectos. Verifica los datos.';
+        }
+        setError(errorMsg);
         setLoading(false);
         return;
       }
@@ -75,17 +83,17 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Email Input */}
+          {/* Username Input */}
           <div className="form-group">
-            <label htmlFor="email">Correo Electrónico</label>
+            <label htmlFor="username">Nombre de Usuario</label>
             <div className="input-wrapper">
               <Mail size={20} />
               <input
-                type="email"
-                id="email"
-                placeholder="tu.correo@ejemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                id="username"
+                placeholder="Ingresa tu usuario (ej: guardia1)"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={loading}
               />
@@ -121,7 +129,7 @@ export default function LoginPage() {
           <button
             type="submit"
             className="btn-login"
-            disabled={loading || !email || !password}
+            disabled={loading || !username || !password}
           >
             {loading ? (
               <>

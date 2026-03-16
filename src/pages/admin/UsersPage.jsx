@@ -9,29 +9,38 @@ export default function UsersPage() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
-    const [newEmail, setNewEmail] = useState('');
+    const [newUsername, setNewUsername] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [newRole, setNewRole] = useState('admin');
+    const [newAreas, setNewAreas] = useState([]);
+    const [newConfig, setNewConfig] = useState({ can_scan_exit: true, can_scan_attendance: true });
+    const [editingUser, setEditingUser] = useState(null);
 
     // Permisos por defecto
     const INITIAL_PERMISSIONS = {
         dashboard: 'none',
-        qr: 'none',
+        scan: 'none',
         alumnos: 'none',
         bus: 'none',
+        qr: 'none',
         historial: 'none',
         analiticas: 'none',
+        asistencia: 'none',
+        displays: 'none',
         config: 'none',
         users: 'none'
     };
 
     const modules = [
         { id: 'dashboard', label: 'Dashboard' },
-        { id: 'qr', label: 'Escanear / QR' },
+        { id: 'scan', label: 'Escanear (Salidas)' },
         { id: 'alumnos', label: 'Alumnos' },
         { id: 'bus', label: 'Gestión de Bus' },
+        { id: 'qr', label: 'Generar QR / Carnets' },
         { id: 'historial', label: 'Historial' },
         { id: 'analiticas', label: 'Analíticas' },
+        { id: 'asistencia', label: 'Reporte Asistencia' },
+        { id: 'displays', label: 'Pantallas (TV / Cola)' },
         { id: 'config', label: 'Configuración' },
         { id: 'users', label: 'Usuarios' },
     ];
@@ -58,22 +67,46 @@ export default function UsersPage() {
         setPermissions(prev => ({ ...prev, [modId]: value }));
     };
 
+    const handleEditClick = (u) => {
+        setEditingUser(u);
+        setNewUsername(u.email?.split('@')[0] || '');
+        setNewRole(u.role || 'admin');
+        setNewAreas(u.areas_p || []);
+        setNewConfig(u.config || { can_scan_exit: true, can_scan_attendance: true });
+        setPermissions(u.permissions || INITIAL_PERMISSIONS);
+        setIsAdding(true);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const resetForm = () => {
+        setIsAdding(false);
+        setEditingUser(null);
+        setNewUsername('');
+        setNewPassword('');
+        setPermissions(INITIAL_PERMISSIONS);
+        setNewAreas([]);
+        setNewConfig({ can_scan_exit: true, can_scan_attendance: true });
+    };
+
     async function handleCreateUser(e) {
         e.preventDefault();
-        if (!newEmail || !newPassword) {
+        if (!newUsername || !newPassword) {
             alert('Por favor completa todos los campos.');
             return;
         }
 
+        const technicalEmail = `${newUsername.toLowerCase().trim()}@roosevelt.edu`;
+
         try {
             setLoading(true);
-            console.log('🔍 Buscando si el perfil ya existe para:', newEmail);
+            console.log('🔍 Buscando si el perfil ya existe para:', technicalEmail);
 
-            // 1. Verificar si ya existe un perfil para este correo
+            // 1. Verificar si ya existe un perfil para este username
             const { data: existingProfile, error: searchError } = await supabase
                 .from('user_profiles')
                 .select('user_id')
-                .eq('email', newEmail.toLowerCase())
+                .eq('email', technicalEmail)
                 .maybeSingle();
 
             if (searchError) console.warn('Aviso búsqueda:', searchError);
@@ -84,7 +117,7 @@ export default function UsersPage() {
                 console.log('🆕 No se encontró perfil previo. Intentando crear en Auth...');
                 // 2. Intentar crear en Auth si no hay perfil previo
                 const { data: authData, error: authError } = await supabase.auth.signUp({
-                    email: newEmail.toLowerCase(),
+                    email: technicalEmail,
                     password: newPassword,
                 });
 
@@ -107,9 +140,11 @@ export default function UsersPage() {
                 .from('user_profiles')
                 .upsert({
                     user_id: targetUserId,
-                    email: newEmail.toLowerCase(),
+                    email: technicalEmail,
                     role: newRole,
                     permissions: permissions,
+                    areas_p: newAreas,
+                    config: newConfig,
                     updated_at: new Date().toISOString()
                 }, {
                     onConflict: 'user_id'
@@ -123,11 +158,8 @@ export default function UsersPage() {
                 throw profileError;
             }
 
-            alert('Usuario gestionado correctamente (Perfil creado/actualizado).');
-            setIsAdding(false);
-            setNewEmail('');
-            setNewPassword('');
-            setPermissions(INITIAL_PERMISSIONS);
+            alert(editingUser ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
+            resetForm();
             fetchUsers();
         } catch (err) {
             console.error('❌ Error detallado:', err);
@@ -188,27 +220,27 @@ export default function UsersPage() {
                         <section className="form-auth-section">
                             <h3>Datos de Acceso</h3>
                             <div className="form-group">
-                                <label>Correo Electrónico</label>
+                                <label>Nombre de Usuario (Username)</label>
                                 <div className="input-with-icon">
-                                    <Mail size={16} />
+                                    <UserPlus size={16} />
                                     <input
-                                        type="email"
-                                        placeholder="ejemplo@mao.com"
-                                        value={newEmail}
-                                        onChange={e => setNewEmail(e.target.value)}
+                                        type="text"
+                                        placeholder="ej: guardia_matinal"
+                                        value={newUsername}
+                                        onChange={e => setNewUsername(e.target.value.replace(/\s/g, ''))}
                                         required
                                     />
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label>Contraseña Temporal</label>
+                                <label>Contraseña {editingUser ? '(Dejar en blanco para no cambiar)' : 'Temporal'}</label>
                                 <div className="input-with-icon">
                                     <Lock size={16} />
                                     <input
                                         type="password"
                                         value={newPassword}
                                         onChange={e => setNewPassword(e.target.value)}
-                                        required
+                                        required={!editingUser}
                                     />
                                 </div>
                             </div>
@@ -220,6 +252,47 @@ export default function UsersPage() {
                                     <option value="bus_manager">Gestor de Bus</option>
                                     <option value="superadmin">Superadmin</option>
                                 </select>
+                            </div>
+
+                            <div className="form-group" style={{ marginTop: '15px' }}>
+                                <label>Áreas Asignadas (Niveles)</label>
+                                <div className="areas-selector">
+                                    {['preprimaria', 'primaria', 'secundaria'].map(area => (
+                                        <label key={area} className="area-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={newAreas.includes(area)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) setNewAreas([...newAreas, area]);
+                                                    else setNewAreas(newAreas.filter(a => a !== area));
+                                                }}
+                                            />
+                                            {area.charAt(0).toUpperCase() + area.slice(1)}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="form-group" style={{ marginTop: '15px' }}>
+                                <label>Capacidades de Escaneo</label>
+                                <div className="config-toggles">
+                                    <label className="toggle-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={newConfig.can_scan_attendance}
+                                            onChange={(e) => setNewConfig({ ...newConfig, can_scan_attendance: e.target.checked })}
+                                        />
+                                        Marcado Asistencia (Entrada)
+                                    </label>
+                                    <label className="toggle-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={newConfig.can_scan_exit}
+                                            onChange={(e) => setNewConfig({ ...newConfig, can_scan_exit: e.target.checked })}
+                                        />
+                                        Control Salida
+                                    </label>
+                                </div>
                             </div>
                         </section>
 
@@ -256,7 +329,16 @@ export default function UsersPage() {
                             ))}
                         </section>
                     </div>
-                    <button type="submit" className="btn-save-user">Crear y Asignar Permisos</button>
+                    <div className="form-actions">
+                        <button type="submit" className="btn-save-user">
+                            {editingUser ? 'Guardar Cambios' : 'Crear y Asignar Permisos'}
+                        </button>
+                        {editingUser && (
+                            <button type="button" className="btn-cancel" onClick={resetForm}>
+                                Cancelar Edición
+                            </button>
+                        )}
+                    </div>
                 </form>
             )}
 
@@ -274,9 +356,9 @@ export default function UsersPage() {
                     <tbody>
                         {users.map(u => (
                             <tr key={u.id}>
-                                <td data-label="Email">
+                                <td data-label="Usuario">
                                     <div className="user-info">
-                                        <span className="email">{u.email}</span>
+                                        <span className="email">{u.email?.split('@')[0]}</span>
                                     </div>
                                 </td>
                                 <td data-label="Rol">
@@ -284,6 +366,11 @@ export default function UsersPage() {
                                 </td>
                                 <td data-label="Permisos">
                                     <div className="permissions-summary">
+                                        <div className="areas-badges">
+                                            {(u.areas_p || []).map(a => (
+                                                <span key={a} className={`area-badge mini ${a}`}>{a}</span>
+                                            ))}
+                                        </div>
                                         {Object.entries(u.permissions || {}).map(([mod, p]) => (
                                             p !== 'none' && <span key={mod} className={`perm-tag ${p}`}>{mod}</span>
                                         ))}
@@ -291,9 +378,14 @@ export default function UsersPage() {
                                 </td>
                                 <td data-label="Registro">{new Date(u.created_at).toLocaleDateString()}</td>
                                 <td data-label="Acciones">
-                                    <button className="btn-delete" onClick={() => alert('Próximamente...')}>
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <div className="action-buttons">
+                                        <button className="btn-edit" onClick={() => handleEditClick(u)}>
+                                            <Shield size={16} />
+                                        </button>
+                                        <button className="btn-delete" onClick={() => alert('Próximamente...')}>
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

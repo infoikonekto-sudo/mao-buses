@@ -96,6 +96,17 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    overflow-y: auto;
+}
+
+/* Scrollbar personalizado para el menú */
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
 }
 
 .nav-item {

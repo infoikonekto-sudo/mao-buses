@@ -4,268 +4,254 @@ import { useAuth } from '../../context/AuthContext';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
-  const [registros, setRegistros] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [estadisticas, setEstadisticas] = useState({});
-  const [filtroNivel, setFiltroNivel] = useState('');
-  const [horaActual, setHoraActual] = useState('');
+    const [stats, setStats] = useState({ total: 0, pre: 0, pri: 0, sec: 0 });
+    const [flowStats, setFlowStats] = useState({ asistencia: 0, entregados: 0, enColegio: 0 });
+    const [recentEntries, setRecentEntries] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeLevel, setActiveLevel] = useState('todos'); // 'todos', 'preprimaria', 'primaria', 'secundaria'
+    const [horaActual, setHoraActual] = useState('');
 
-  const { user, profile, profileLoading, initialized } = useAuth();
+    const { user, profile, profileLoading, initialized } = useAuth();
 
-  useEffect(() => {
-    if (initialized && !profileLoading && profile) {
-      cargarRegistros();
-    }
-
-    // Reloj
-    const interval = setInterval(() => {
-      setHoraActual(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    }, 1000);
-
-    // Suscribirse a cambios en tiempo real
-    const hoy = new Date().toISOString().split('T')[0];
-    const channel = supabase
-      .channel('admin_cola')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'cola_dia' },
-        (payload) => {
-          cargarRegistros();
+    useEffect(() => {
+        if (initialized && !profileLoading && profile) {
+            loadAllData();
         }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'cola_dia' },
-        (payload) => {
-          cargarRegistros();
+
+        // Reloj
+        const interval = setInterval(() => {
+            setHoraActual(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        }, 1000);
+
+        // Suscribirse a cambios en tiempo real
+        const hoy = new Date().toISOString().split('T')[0];
+        const colaChannel = supabase
+            .channel('admin_cola')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'cola_dia', filter: `fecha_dia=eq.${hoy}` },
+                () => {
+                    loadRecentEntries();
+                    loadFlowStats();
+                }
+            )
+            .subscribe();
+
+        const asistenciaChannel = supabase
+            .channel('admin_asistencia')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'asistencia_dia', filter: `fecha_dia=eq.${hoy}` },
+                () => {
+                    loadStats();
+                    loadFlowStats();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            clearInterval(interval);
+            supabase.removeChannel(colaChannel);
+            supabase.removeChannel(asistenciaChannel);
+        };
+    }, [initialized, profileLoading, profile, activeLevel]);
+
+    async function loadAllData() {
+        setLoading(true);
+        await Promise.all([
+            loadRecentEntries(),
+            loadStats(),
+            loadFlowStats()
+        ]);
+        setLoading(false);
+    }
+
+    async function loadRecentEntries() {
+        const hoy = new Date().toISOString().split('T')[0];
+        let query = supabase
+            .from('cola_dia')
+            .select('*')
+            .eq('fecha_dia', hoy)
+            .order('hora_escaneo', { ascending: false })
+            .limit(50);
+
+        if (profile?.role !== 'superadmin' && activeLevel === 'todos') {
+            query = query.in('nivel', profile?.areas_p || []);
+        } else if (activeLevel !== 'todos') {
+            query = query.eq('nivel', activeLevel);
         }
-      )
-      .subscribe();
 
-    return () => {
-      clearInterval(interval);
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  async function cargarRegistros() {
-    setCargando(true);
-    const hoy = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
-      .from('cola_dia')
-      .select('*')
-      .eq('fecha_dia', hoy)
-      .order('hora_escaneo', { ascending: false }) // Cambiado a hora_escaneo para evitar problemas con turno:0
-      .limit(50);
-
-    if (error) {
-      console.error('Error cargando Dashboard:', error);
-    } else if (data) {
-      setRegistros(data);
-      calcularEstadisticas(data);
+        const { data } = await query;
+        if (data) setRecentEntries(data);
     }
-    setCargando(false);
-  }
 
-  async function limpiarCola() {
-    if (!window.confirm('¿Estás seguro de que deseas limpiar todas las pantallas de visualización? Los alumnos marcados como entregados ya no aparecerán.')) return;
+    const loadStats = async () => {
+        const hoy = new Date().toISOString().split('T')[0];
+        let query = supabase.from('asistencia_dia').select('nivel').eq('fecha_dia', hoy);
 
-    try {
-      const hoy = new Date().toISOString().split('T')[0];
-      const { error } = await supabase
-        .from('cola_dia')
-        .update({
-          estado: 'entregado',
-          hora_entrega: new Date().toISOString()
-        })
-        .eq('fecha_dia', hoy)
-        .eq('estado', 'esperando');
+        if (profile?.role !== 'superadmin' && activeLevel === 'todos') {
+            query = query.in('nivel', profile?.areas_p || []);
+        } else if (activeLevel !== 'todos') {
+            query = query.eq('nivel', activeLevel);
+        }
 
-      if (error) throw error;
-      cargarRegistros();
-    } catch (err) {
-      console.error('Error al limpiar cola:', err);
-      alert('Error al limpiar la cola');
-    }
-  }
-
-  function calcularEstadisticas(datos) {
-    const stats = {
-      total: datos.length,
-      preprimaria: datos.filter(d => d.nivel === 'preprimaria').length,
-      primaria: datos.filter(d => d.nivel === 'primaria').length,
-      secundaria: datos.filter(d => d.nivel === 'secundaria').length,
-      conBus: datos.filter(d => d.bus).length,
-      conFoto: datos.filter(d => d.foto_url).length,
-      entregados: datos.filter(d => d.estado === 'entregado').length,
+        const { data } = await query;
+        if (data) {
+            setStats({
+                total: data.length,
+                pre: data.filter(a => a.nivel === 'preprimaria').length,
+                pri: data.filter(a => a.nivel === 'primaria').length,
+                sec: data.filter(a => a.nivel === 'secundaria').length,
+            });
+        }
     };
-    setEstadisticas(stats);
-  }
 
-  const registrosFiltrados = registros.filter(r => {
-    if (!filtroNivel) return true;
-    return r.nivel === filtroNivel;
-  });
+    const loadFlowStats = async () => {
+        const hoy = new Date().toISOString().split('T')[0];
 
-  /* helpers para el feed */
-  function avatarColor(nivel) {
+        // Asistencias (Entradas)
+        let qAsis = supabase.from('asistencia_dia').select('id', { count: 'exact' }).eq('fecha_dia', hoy);
+        if (activeLevel !== 'todos') qAsis = qAsis.eq('nivel', activeLevel);
+        else if (profile?.role !== 'superadmin') qAsis = qAsis.in('nivel', profile?.areas_p || []);
+
+        // Salidas (Entregados)
+        let qSalida = supabase.from('cola_dia').select('id', { count: 'exact' }).eq('fecha_dia', hoy).eq('estado', 'entregado');
+        if (activeLevel !== 'todos') qSalida = qSalida.eq('nivel', activeLevel);
+        else if (profile?.role !== 'superadmin') qSalida = qSalida.in('nivel', profile?.areas_p || []);
+
+        const [asisRes, salidaRes] = await Promise.all([qAsis, qSalida]);
+
+        setFlowStats({
+            asistencia: asisRes.count || 0,
+            entregados: salidaRes.count || 0,
+            enColegio: Math.max(0, (asisRes.count || 0) - (salidaRes.count || 0))
+        });
+    };
+
+    async function limpiarCola() {
+        if (!window.confirm('¿Estás seguro de que deseas limpiar todas las pantallas?')) return;
+        try {
+            const hoy = new Date().toISOString().split('T')[0];
+            let query = supabase
+                .from('cola_dia')
+                .update({ estado: 'entregado', hora_entrega: new Date().toISOString() })
+                .eq('fecha_dia', hoy)
+                .eq('estado', 'esperando');
+
+            if (profile?.role !== 'superadmin' && activeLevel === 'todos') {
+                query = query.in('nivel', profile?.areas_p || []);
+            } else if (activeLevel !== 'todos') {
+                query = query.eq('nivel', activeLevel);
+            }
+
+            const { error } = await query;
+            if (error) throw error;
+            loadAllData();
+        } catch (err) {
+            console.error(err);
+            alert('Error al limpiar');
+        }
+    }
+
+    return (
+        <div className="dashboard-container">
+            <div className="dashboard-header">
+                <div className="header-left">
+                    <h1>¡Hola Administrador!</h1>
+                    <p className="welcome-msg">Resumen de flujo en tiempo real por área asignada.</p>
+                </div>
+                <div className="header-right">
+                    <span className="hora-actual">{horaActual}</span>
+                    <button className="btn-clean-all" onClick={limpiarCola}>🧹 Limpiar Pantallas</button>
+                    <button className="btn-refresh" onClick={loadAllData}>🔄 Sincronizar</button>
+                </div>
+            </div>
+
+            <div className="flow-stats-grid">
+                <div className="flow-card asis">
+                    <div className="flow-icon">📝</div>
+                    <div className="flow-data">
+                        <span className="flow-num">{flowStats.asistencia}</span>
+                        <p>Total Asistencia</p>
+                    </div>
+                </div>
+                <div className="flow-card out">
+                    <div className="flow-icon">🚗</div>
+                    <div className="flow-data">
+                        <span className="flow-num">{flowStats.entregados}</span>
+                        <p>Total Salida</p>
+                    </div>
+                </div>
+                <div className="flow-card remain">
+                    <div className="flow-icon">🏫</div>
+                    <div className="flow-data">
+                        <span className="flow-num">{flowStats.enColegio}</span>
+                        <p>En el Colegio</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="estadisticas-grid">
+                <StatCard nivel="Preprimaria" count={stats.pre} color="#7C3AED" icon="🌱" />
+                <StatCard nivel="Primaria" count={stats.pri} color="#0891B2" icon="📚" />
+                <StatCard nivel="Secundaria" count={stats.sec} color="#059669" icon="🎓" />
+                <StatCard nivel="Total" count={stats.total} color="#0F2A4A" icon="📊" />
+            </div>
+
+            <div className="filtros-row">
+                {['todos', 'preprimaria', 'primaria', 'secundaria'].map((f) => (
+                    <button
+                        key={f}
+                        className={`filtro-pill ${activeLevel === f ? 'active' : ''}`}
+                        onClick={() => setActiveLevel(f)}
+                    >
+                        {f === 'todos' ? 'Todos' : f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                ))}
+            </div>
+
+            <div className="ultimas-salidas">
+                <h2 className="feed-titulo">Últimas Llamadas <span className="feed-count">({recentEntries.length})</span></h2>
+                {loading ? <p className="loading">Cargando...</p> : (
+                    <div className="feed-list">
+                        {recentEntries.map((s) => (
+                            <div key={s.id} className="feed-item">
+                                <div className="feed-avatar" style={{ background: avatarColor(s.nivel) }}>{s.nombre.charAt(0)}</div>
+                                <div className="feed-info">
+                                    <p className="feed-nombre">{s.nombre || 'Sin nombre'}</p>
+                                    <p className="feed-grado">{s.grado} · {s.seccion}</p>
+                                </div>
+                                <div className="feed-meta">
+                                    <span className={`badge badge-${s.nivel}`}>{s.nivel}</span>
+                                    <span className="feed-hora">{new Date(s.hora_escaneo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function StatCard({ nivel, count, color, icon }) {
+    return (
+        <div className="stat-card" style={{ '--nivel-color': color }}>
+            <div className="stat-top">
+                <span className="stat-icon">{icon}</span>
+                <span className="stat-badge" style={{ background: `${color}18`, color }}>{nivel}</span>
+            </div>
+            <div className="stat-number">{count}</div>
+            <div className="stat-label">Asistencias hoy</div>
+        </div>
+    );
+}
+
+function avatarColor(nivel) {
     switch (nivel) {
-      case 'preprimaria': return '#7C3AED';
-      case 'primaria': return '#0891B2';
-      case 'secundaria': return '#059669';
-      default: return '#0F2A4A';
+        case 'preprimaria': return '#7C3AED';
+        case 'primaria': return '#0891B2';
+        case 'secundaria': return '#059669';
+        default: return '#0F2A4A';
     }
-  }
-
-  function formatearHora(ts) {
-    if (!ts) return '--:--';
-    return new Date(ts).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function formatearNombre(nombre) {
-    if (!nombre) return 'N/A';
-    return nombre;
-  }
-
-  // Componente para las cards de estadísticas
-  function StatCard({ nivel, count, color, icon, trend }) {
-    return (
-      <div className="stat-card" style={{ '--nivel-color': color }}>
-        <div className="stat-top">
-          <span className="stat-icon">{icon}</span>
-          <span className="stat-badge" style={{ background: `${color}18`, color }}>
-            {nivel}
-          </span>
-        </div>
-        <div className="stat-number">{count}</div>
-        <div className="stat-label">alumnos llamados hoy</div>
-        <div className="stat-bar">
-          <div className="stat-fill" style={{ width: `${Math.min(trend, 100)}%`, background: color }} />
-        </div>
-      </div>
-    );
-  }
-
-  if (!initialized || profileLoading) {
-    return (
-      <div className="dashboard-loading">
-        <div className="spinner"></div>
-        <h1>Validando acceso...</h1>
-        <p>Conectando con la base de datos central de Colegio MAO.</p>
-      </div>
-    );
-  }
-
-  if (initialized && user && !profile) {
-    return (
-      <div className="dashboard-loading">
-        <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⚠️</div>
-        <h1>Dificultad de Conexión</h1>
-        <p>No logramos recuperar tu perfil de administrador. Por favor, reintenta.</p>
-        <button onClick={() => window.location.reload()} className="btn-refresh" style={{ marginTop: '20px' }}>
-          🔄 Reintentar Conexión
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <div className="header-left">
-          <h1>¡Hola Administrador!</h1>
-          <p className="welcome-msg">Aquí tienes el resumen de hoy en tiempo real.</p>
-          <div className="live-indicator">
-            <span className="live-dot"></span>
-            <span>SISTEMA ACTIVO</span>
-          </div>
-        </div>
-        <div className="header-right">
-          <span className="hora-actual">{horaActual}</span>
-          <button className="btn-clean-all" onClick={limpiarCola}>
-            🧹 Limpiar Pantallas
-          </button>
-          <button className="btn-refresh" onClick={cargarRegistros}>
-            🔄 Sincronizar
-          </button>
-        </div>
-      </div>
-
-      <div className="estadisticas-grid">
-        <StatCard
-          nivel="Preprimaria"
-          count={estadisticas.preprimaria || 0}
-          color="#7C3AED"
-          icon="🌱"
-          trend={(estadisticas.preprimaria / Math.max(estadisticas.total, 1)) * 100}
-        />
-        <StatCard
-          nivel="Primaria"
-          count={estadisticas.primaria || 0}
-          color="#0891B2"
-          icon="📚"
-          trend={(estadisticas.primaria / Math.max(estadisticas.total, 1)) * 100}
-        />
-        <StatCard
-          nivel="Secundaria"
-          count={estadisticas.secundaria || 0}
-          color="#059669"
-          icon="🎓"
-          trend={(estadisticas.secundaria / Math.max(estadisticas.total, 1)) * 100}
-        />
-        <StatCard
-          nivel="Total"
-          count={estadisticas.total || 0}
-          color="#0F2A4A"
-          icon="📊"
-          trend={100}
-        />
-      </div>
-
-      <div className="filtros-row">
-        <span className="filtros-label">Filtrar:</span>
-        {['todos', 'preprimaria', 'primaria', 'secundaria'].map((f) => (
-          <button
-            key={f}
-            className={`filtro-pill ${(f === 'todos' && filtroNivel === '') || filtroNivel === f ? 'active' : ''
-              }`}
-            data-nivel={f}
-            onClick={() => setFiltroNivel(f === 'todos' ? '' : f)}
-          >
-            {f === 'todos' ? 'Todos' : f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      <div className="ultimas-salidas">
-        <h2 className="feed-titulo">
-          Últimas Salidas <span className="feed-count">({registrosFiltrados.length})</span>
-        </h2>
-
-        {cargando ? (
-          <p className="loading">Cargando registros...</p>
-        ) : registrosFiltrados.length === 0 ? (
-          <p className="loading">No hay registros de hoy</p>
-        ) : (
-          <div className="feed-list">
-            {registrosFiltrados.map((s) => (
-              <div key={s.id} className="feed-item">
-                <div className="feed-avatar" style={{ background: avatarColor(s.nivel) }}>
-                  {s.nombre.charAt(0)}
-                </div>
-                <div className="feed-info">
-                  <p className="feed-nombre">{formatearNombre(s.nombre)}</p>
-                  <p className="feed-grado">{s.grado} · Sección {s.seccion}</p>
-                </div>
-                <div className="feed-meta">
-                  <span className={`badge badge-${s.nivel}`}>{s.nivel}</span>
-                  <span className="feed-hora">{formatearHora(s.hora_escaneo)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }

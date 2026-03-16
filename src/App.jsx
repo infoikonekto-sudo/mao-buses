@@ -11,6 +11,7 @@ import SecundariaDisplay from './pages/SecundariaDisplay';
 import PreprimariaDisplay from './pages/PreprimariaDisplay';
 import AdminPanel from "./pages/admin/AdminPanel";
 import LoginPage from './pages/LoginPage';
+import AttendanceScanPage from './pages/AttendanceScanPage';
 import NotFound from './pages/NotFound';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -108,6 +109,8 @@ function AppContent() {
         <Route path="/display/secundaria" element={<SecundariaDisplay />} />
         <Route path="/display/preprimaria" element={<PreprimariaDisplay />} />
         <Route path="/display/:nivel" element={<DisplayScreen />} />
+
+        {/* Marcado de Asistencia será parte de Admin para tener Sidebar */}
 
         <Route
           path="/admin/*"

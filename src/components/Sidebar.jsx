@@ -10,12 +10,13 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
 
   const routes = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/admin', permission: 'dashboard' },
-    { id: 'scan', label: 'Escanear', icon: '📱', path: '/admin/scan', permission: 'qr' },
+    { id: 'scan', label: 'Escanear', icon: '📱', path: '/admin/scan', permission: 'scan' },
     { id: 'alumnos', label: 'Alumnos', icon: '👥', path: '/admin/alumnos', permission: 'alumnos' },
     { id: 'bus', label: 'Gestión de Bus', icon: '🚌', path: '/admin/bus', permission: 'bus' },
     { id: 'qr', label: 'QR / Carnets', icon: '🎫', path: '/admin/qr', permission: 'qr' },
     { id: 'historial', label: 'Historial', icon: '🕒', path: '/admin/historial', permission: 'historial' },
     { id: 'analiticas', label: 'Analíticas', icon: '📈', path: '/admin/analytics', permission: 'analiticas' },
+    { id: 'asistencia', label: 'Reporte Asistencia', icon: '📋', path: '/admin/asistencia', permission: 'asistencia' },
     { id: 'users', label: 'Gestión Usuarios', icon: '🔐', path: '/admin/users', permission: 'users' },
     { id: 'config', label: 'Configuración', icon: '⚙️', path: '/admin/config', permission: 'config' },
   ];
@@ -91,26 +92,42 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
             {isActive(route.path) && <div className="nav-indicator" />}
           </button>
         ))}
-        {displayRoutes.map(item => (
-          <button
-            key={item.id}
-            className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-            onClick={() => {
-              window.open(item.href, '_blank');
-            }}
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label">{item.label}</span>
-            {activeTab === item.id && <span className="nav-indicator" />}
+
+        {(profile?.role === 'superadmin' || profile?.permissions?.displays !== 'none') && 
+          displayRoutes.map(item => (
+            <button
+              key={item.id}
+              className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+              onClick={() => {
+                window.open(item.href, '_blank');
+              }}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+              {activeTab === item.id && <span className="nav-indicator" />}
+            </button>
+          ))
+        }
+
+        {/* Acceso rápido a escáneres según configuración */}
+        <div className="sidebar-divider" style={{ margin: '12px 0' }} />
+        {profile?.config?.can_scan_attendance && (
+          <button className="nav-item special-scan" onClick={() => navigate('/admin/marcado')}>
+            <span className="nav-icon">📝</span>
+            <span className="nav-label">Marcado Entrada</span>
           </button>
-        ))}
+        )}
       </nav>
 
       {/* Footer del sidebar */}
       <div className="sidebar-footer">
         <div className="user-pill">
-          <div className="user-avatar">{user?.email?.charAt(0).toUpperCase() || 'L'}</div>
-          <span className="user-email">{user?.email || 'usuario@mao.com'}</span>
+          <div className="user-avatar">{user?.email?.charAt(0).toUpperCase() || 'U'}</div>
+          <span className="user-email">
+            {user?.email?.includes('@roosevelt.edu') 
+              ? user.email.split('@')[0] 
+              : user?.email || 'Usuario'}
+          </span>
         </div>
         <button className="btn-logout" onClick={handleLogout}>Salir</button>
       </div>

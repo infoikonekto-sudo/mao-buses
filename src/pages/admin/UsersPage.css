@@ -153,6 +153,34 @@
     box-shadow: 0 15px 30px -8px rgba(15, 42, 74, 0.4);
 }
 
+.form-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.form-actions .btn-save-user {
+    flex: 2;
+    margin-top: 0;
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 16px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    border-radius: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #e2e8f0;
+    color: #0F2A4A;
+}
+
 /* ─── Mobile Optimizado (iPhone / Samsung) ─── */
 
 @media (max-width: 768px) {
@@ -436,6 +464,25 @@
 
 .btn-delete:hover {
     background: #fee2e2;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit {
+    padding: 8px;
+    background: #eff6ff;
+    color: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-edit:hover {
+    background: #dbeafe;
 }
 
 .access-denied {

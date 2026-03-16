@@ -25,7 +25,7 @@ async function fetchProfileBg(userId, email, onSuccess) {
     try {
         const { data, error } = await supabase
             .from('user_profiles')
-            .select('*')
+            .select('user_id, email, role, permissions, areas_p, config')
             .eq('user_id', userId)
             .maybeSingle();
 
@@ -142,7 +142,7 @@ export function AuthProvider({ children }) {
                 setLoading(false);
                 setInitialized(true);
             }
-        }, 5000);
+        }, 15000);
 
         return () => {
             cancelled = true;

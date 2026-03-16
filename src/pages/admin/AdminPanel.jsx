@@ -11,7 +11,9 @@ import DashboardPage from './DashboardPage';
 import AnalyticsPage from './AnalyticsPage';
 import BusPage from './BusPage';
 import ConfigPage from './ConfigPage';
-import UsersPage from './UsersPage'; // Added import for UsersPage
+import UsersPage from './UsersPage';
+import AttendanceReportPage from './AttendanceReportPage';
+import AttendanceScanPage from '../AttendanceScanPage';
 import logo from '../../assets/logo.png';
 import './AdminPanel.css';
 
@@ -33,7 +35,9 @@ export default function AdminPanel() {
     if (path === '/admin/bus') return 'bus';
     if (path === '/admin/analytics') return 'analytics';
     if (path === '/admin/config') return 'config';
-    if (path === '/admin/users') return 'users'; // Added condition for UsersPage
+    if (path === '/admin/users') return 'users';
+    if (path === '/admin/asistencia') return 'asistencia';
+    if (path === '/admin/marcado') return 'marcado';
     return 'dashboard';
   };
 
@@ -47,7 +51,9 @@ export default function AdminPanel() {
       bus: '/admin/bus',
       analytics: '/admin/analytics',
       config: '/admin/config',
-      users: '/admin/users'
+      users: '/admin/users',
+      asistencia: '/admin/asistencia',
+      marcado: '/admin/marcado'
     };
     navigate(routes[tabId]);
     setSidebarOpen(false); // Cerrar al navegar en mobile
@@ -105,6 +111,8 @@ export default function AdminPanel() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="config" element={<ConfigPage />} />
             <Route path="users" element={<UsersPage />} />
+            <Route path="asistencia" element={<AttendanceReportPage />} />
+            <Route path="marcado" element={<AttendanceScanPage />} />
           </Routes>
         </div>
       </main>
