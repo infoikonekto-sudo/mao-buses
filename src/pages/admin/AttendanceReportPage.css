@@ -286,85 +286,38 @@ td {
 
 @media (max-width: 768px) {
     .attendance-report {
-        padding: 16px;
+        padding: 12px;
     }
 
     .report-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
+        gap: 8px;
     }
 
     .report-header h1 {
-        font-size: 1.5rem;
-    }
-
-    .header-controls {
-        width: 100%;
-        flex-direction: column;
-    }
-
-    .date-input {
-        width: 100%;
-    }
-
-    .export-buttons {
-        width: 100%;
-    }
-
-    .btn-export {
-        flex: 1;
-        justify-content: center;
+        font-size: 1.3rem;
     }
 
     .stats-strip {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 8px;
+        margin-bottom: 20px;
     }
 
     .stat-item {
-        padding: 15px;
-        flex-direction: column;
-        text-align: center;
-        gap: 8px;
+        padding: 12px;
+        gap: 4px;
     }
 
-    .stat-item svg {
-        width: 32px;
-        height: 32px;
+    .stat-item span {
+        font-size: 1.2rem;
     }
 
-    .filter-bar {
-        flex-direction: column;
-        gap: 12px;
+    .search-box input {
+        padding: 10px 12px 10px 38px;
     }
 
-    .search-box {
-        min-width: 100%;
-    }
-
-    .select-filters {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .select-filters select {
-        width: 100%;
-    }
-
-    .toggle-group {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .toggle-group button {
-        padding: 8px 4px;
-        font-size: 0.75rem;
-    }
-
-    /* Transformación de Tabla a Tarjetas */
+    /* Transformación a Tarjetas Ultra-Compactas */
     .table-container {
         background: transparent;
         box-shadow: none;
@@ -374,85 +327,124 @@ td {
         display: block;
     }
 
-    thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
+    thead {
+        display: none;
     }
 
     tr {
         background: white;
-        border-radius: 16px;
-        margin-bottom: 16px;
+        border-radius: 12px;
+        margin-bottom: 10px;
         padding: 12px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        border: 1px solid #f1f5f9;
+        border: 1px solid #e2e8f0;
+        display: grid;
+        grid-template-areas: 
+            "avatar info info"
+            "avatar stats bus";
+        grid-template-columns: 45px 1fr auto;
+        gap: 4px 12px;
+        align-items: center;
     }
 
     td {
-        border: none;
-        padding: 8px 0;
-        position: relative;
-        padding-left: 50%;
-        text-align: right;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        border-bottom: 1px solid #f8fafc;
-    }
-
-    td:last-child {
-        border-bottom: none;
-    }
-
-    td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 0;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: 700;
-        color: #94a3b8;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-    }
-
-    /* Ajustes específicos para celdas de tarjeta */
-    td[data-label="Alumno"] {
-        padding-left: 0;
-        padding-top: 0;
         display: block;
+        padding: 0;
+        border: none !important;
+        background: transparent !important;
         text-align: left;
-        border-bottom: 2px solid #f1f5f9;
-        margin-bottom: 8px;
     }
 
-    td[data-label="Alumno"]::before {
-        display: none;
+    /* Ocultamos las etiquetas "data-label" para ahorrar espacio vertical */
+    td::before {
+        display: none !important;
     }
 
-    .cell-user {
+    /* Posicionamiento por área */
+    td[data-label="Alumno"] {
+        grid-area: avatar / avatar / info / info;
+        display: flex;
+        align-items: center;
         gap: 12px;
+        margin-bottom: 2px;
     }
 
-    .u-name {
-        font-size: 1rem;
+    /* Ajuste interno del avatar y nombre para que queden en una línea */
+    .cell-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
     }
 
     .mini-avatar {
         width: 40px;
         height: 40px;
+        flex-shrink: 0;
+    }
+
+    .u-name {
+        font-size: 0.95rem;
+        word-break: break-word;
+        line-height: 1.2;
+    }
+
+    .u-id {
+        font-size: 0.7rem;
+    }
+
+    /* Grado y Sección */
+    td[data-label="Grado / Sección"] {
+        grid-row: 2;
+        grid-column: 2;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    /* Estado y Hora compactados */
+    td[data-label="Estado"] {
+        display: inline-flex;
+        grid-row: 1;
+        grid-column: 3;
+        justify-content: flex-end;
+    }
+
+    .status-pill {
+        padding: 2px 8px;
+        font-size: 0.65rem;
+    }
+
+    td[data-label="Hora Entrada"] {
+        grid-row: 2;
+        grid-column: 2;
+        margin-left: 0;
+        margin-top: 18px; /* Lo bajamos un poquito */
+        font-size: 0.8rem;
+        color: #94a3b8;
+    }
+
+    /* Bus a la derecha */
+    td[data-label="Bus"] {
+        grid-row: 2;
+        grid-column: 3;
+        display: flex;
+        justify-content: flex-end;
         font-size: 1.2rem;
     }
 
-    .u-time {
-        font-size: 0.9rem;
+    /* Ajuste para que Grado y Hora no choquen */
+    td[data-label="Grado / Sección"] {
+        display: flex;
+        flex-direction: column;
     }
 
+    .u-section {
+        display: inline-block;
+        margin-left: 4px;
+    }
+
+    /* Estilo para fila ausente */
     .row-absent {
-        border: 1px solid #fee2e2;
-        background: #fffafa;
+        background: #fffcfc;
+        border-left: 4px solid #ef4444;
     }
 }
