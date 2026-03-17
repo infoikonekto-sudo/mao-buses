@@ -1,5 +1,7 @@
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LogOut, User, ChevronUp } from 'lucide-react';
 import logo from '../assets/logo.png';
 import './Sidebar.css';
 
@@ -7,6 +9,8 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   const { logout, user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef(null);
 
   const routes = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/admin', permission: 'dashboard' },
@@ -45,6 +49,17 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -119,17 +134,44 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }) {
         )}
       </nav>
 
-      {/* Footer del sidebar */}
-      <div className="sidebar-footer">
-        <div className="user-pill">
-          <div className="user-avatar">{user?.email?.charAt(0).toUpperCase() || 'U'}</div>
-          <span className="user-email">
-            {user?.email?.includes('@roosevelt.edu') 
-              ? user.email.split('@')[0] 
-              : user?.email || 'Usuario'}
-          </span>
-        </div>
-        <button className="btn-logout" onClick={handleLogout}>Salir</button>
+      {/* Footer del sidebar con Menú de Usuario */}
+      <div className="sidebar-footer" ref={menuRef}>
+        {showUserMenu && (
+          <div className="user-dropdown-menu">
+            <div className="dropdown-header">
+              <span className="dropdown-title">Mi Cuenta</span>
+            </div>
+            <button className="dropdown-item" onClick={() => navigate('/admin/users')}>
+              <User size={16} />
+              <span>Ver Perfil</span>
+            </button>
+            <div className="dropdown-divider" />
+            <button className="dropdown-item logout" onClick={handleLogout}>
+              <LogOut size={16} />
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        )}
+        
+        <button 
+          className={`user-profile-button ${showUserMenu ? 'active' : ''}`}
+          onClick={() => setShowUserMenu(!showUserMenu)}
+        >
+          <div className="user-avatar-container">
+            <div className="user-avatar">
+              {user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+          </div>
+          <div className="user-info-text">
+            <span className="user-name">
+              {user?.email?.includes('@roosevelt.edu') 
+                ? user.email.split('@')[0] 
+                : user?.email || 'Usuario'}
+            </span>
+            <span className="user-role">{profile?.role || 'Personal'}</span>
+          </div>
+          <ChevronUp size={16} className={`chevron-icon ${showUserMenu ? 'rotate' : ''}`} />
+        </button>
       </div>
     </aside>
   );
