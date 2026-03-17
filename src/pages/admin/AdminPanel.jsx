@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { LogOut, User, ChevronDown } from 'lucide-react';
 import ExcelImporter from '../../components/ExcelImporter';
 import Sidebar from '../../components/Sidebar';
 import ScanPage from '../ScanPage';
@@ -20,9 +21,27 @@ import './AdminPanel.css';
 export default function AdminPanel() {
   const [showExcelImporter, setShowExcelImporter] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, logout, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   // Determinar tab activo basado en la ruta
   const getActiveTab = () => {
@@ -87,15 +106,45 @@ export default function AdminPanel() {
               <h1 className="app-title">Mao Salidas</h1>
             </div>
           </div>
-          <div className="app-header-right">
+          <div className="app-header-right" ref={menuRef}>
             <button
               className="btn-import"
               style={{ display: 'none' }}
               onClick={() => setShowExcelImporter(true)}
             />
-            <div className="app-user">
-              <div className="app-user-dot">{user?.email?.charAt(0).toUpperCase() || 'U'}</div>
-              <span className="user-email-text">{user?.email}</span>
+            <div className="topbar-user-container">
+              <button 
+                className={`topbar-user-button ${showUserMenu ? 'active' : ''}`}
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              >
+                <div className="app-user-dot">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <span className="user-email-text">
+                  {user?.email?.includes('@roosevelt.edu') 
+                    ? user.email.split('@')[0] 
+                    : user?.email}
+                </span>
+                <ChevronDown size={14} className={`chevron-icon ${showUserMenu ? 'rotate' : ''}`} />
+              </button>
+
+              {showUserMenu && (
+                <div className="topbar-user-dropdown">
+                  <div className="dropdown-info">
+                    <span className="info-email">{user?.email}</span>
+                    <span className="info-role">{profile?.role || 'Personal'}</span>
+                  </div>
+                  <div className="dropdown-divider" />
+                  <button className="dropdown-item" onClick={() => { navigate('/admin/users'); setShowUserMenu(false); }}>
+                    <User size={16} />
+                    <span>Mi Perfil</span>
+                  </button>
+                  <button className="dropdown-item logout" onClick={handleLogout}>
+                    <LogOut size={16} />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

@@ -232,32 +232,135 @@
   background: #1A6BC0;
 }
 
-.app-user {
+.topbar-user-container {
+  position: relative;
+}
+
+.topbar-user-button {
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: rgba(255, 255, 255, 0.9);
-  /* Texto blanco para fondo oscuro */
-  font-size: 0.85rem;
-  font-weight: 500;
+  gap: 10px;
   padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 40px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.topbar-user-button:hover,
+.topbar-user-button.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .app-user-dot {
-  width: 32px;
-  height: 32px;
-  background: var(--azul-claro);
+  width: 30px;
+  height: 30px;
+  background: #2D7DD2;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: white;
-  flex-shrink: 0;
+}
+
+.user-email-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-user-button .chevron-icon {
+  opacity: 0.5;
+  transition: transform 0.2s;
+}
+
+.topbar-user-button .chevron-icon.rotate {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Styles */
+.topbar-user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  background: white;
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border: 1px solid #e2e8f0;
+  z-index: 1000;
+  animation: dropdownFade 0.2s ease-out;
+}
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-info {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-email {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+  word-break: break-all;
+}
+
+.info-role {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 6px 0;
+}
+
+.topbar-user-dropdown .dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.topbar-user-dropdown .dropdown-item:hover {
+  background: #f1f5f9;
+  color: #0F2A4A;
+}
+
+.topbar-user-dropdown .dropdown-item.logout {
+  color: #ef4444;
+}
+
+.topbar-user-dropdown .dropdown-item.logout:hover {
+  background: #fef2f2;
 }
 
 @media (max-width: 1024px) {
