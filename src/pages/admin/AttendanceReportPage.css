@@ -296,12 +296,16 @@ td {
         padding: 16px;
         border-radius: 16px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .report-header div:first-child {
         display: flex;
         align-items: center;
         gap: 10px;
+        width: 100%;
     }
 
     .report-header h1 {
@@ -309,31 +313,32 @@ td {
         margin: 0;
     }
 
-    .report-header p {
-        display: none; /* Ocultamos subtítulo largo en mobile */
-    }
-
     .header-controls {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
+        display: flex;
+        flex-direction: column;
         width: 100%;
-        gap: 8px;
+        gap: 12px;
+        margin-top: 8px;
     }
 
     .date-input {
-        flex: 1;
-        padding: 8px 12px;
-        font-size: 0.85rem;
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 0.9rem;
     }
 
     .export-buttons {
-        gap: 4px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
     }
 
     .btn-export {
-        padding: 8px 12px;
-        font-size: 0.8rem;
+        padding: 10px;
+        font-size: 0.85rem;
+        justify-content: center;
+        width: 100%;
     }
 
     .stats-strip {
