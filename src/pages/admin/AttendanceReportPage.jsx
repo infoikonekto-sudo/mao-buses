@@ -224,7 +224,7 @@ export default function AttendanceReportPage() {
                         <tbody>
                             {alumnosProcesados.map(a => (
                                 <tr key={a.carnet} className={!a.presente ? 'row-absent' : ''}>
-                                    <td>
+                                    <td data-label="Alumno">
                                         <div className="cell-user">
                                             <div className="mini-avatar">{a.nombre.charAt(0)}</div>
                                             <div>
@@ -233,17 +233,17 @@ export default function AttendanceReportPage() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td data-label="Grado / Sección">
                                         <span className="u-grade">{a.grado}</span>
                                         <span className="u-section">{a.seccion}</span>
                                     </td>
-                                    <td>
+                                    <td data-label="Estado">
                                         <span className={`status-pill ${a.presente ? 'present' : 'absent'}`}>
                                             {a.presente ? 'Presente' : 'Ausente'}
                                         </span>
                                     </td>
-                                    <td className="u-time">{a.hora_entrada || '--:--'}</td>
-                                    <td>{a.bus_hoy ? <span className="bus-icon">🚌</span> : '--'}</td>
+                                    <td data-label="Hora Entrada" className="u-time">{a.hora_entrada || '--:--'}</td>
+                                    <td data-label="Bus">{a.bus_hoy ? <span className="bus-icon">🚌</span> : '--'}</td>
                                 </tr>
                             ))}
                         </tbody>

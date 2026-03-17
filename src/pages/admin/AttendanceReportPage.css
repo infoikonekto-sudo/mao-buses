@@ -285,7 +285,174 @@ td {
 }
 
 @media (max-width: 768px) {
-    .report-header { flex-direction: column; align-items: stretch; gap: 16px; }
-    .filter-bar { flex-direction: column; }
-    .select-filters { flex-direction: column; }
+    .attendance-report {
+        padding: 16px;
+    }
+
+    .report-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .report-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .header-controls {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .date-input {
+        width: 100%;
+    }
+
+    .export-buttons {
+        width: 100%;
+    }
+
+    .btn-export {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .stats-strip {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-item {
+        padding: 15px;
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+
+    .stat-item svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-box {
+        min-width: 100%;
+    }
+
+    .select-filters {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .select-filters select {
+        width: 100%;
+    }
+
+    .toggle-group {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .toggle-group button {
+        padding: 8px 4px;
+        font-size: 0.75rem;
+    }
+
+    /* Transformación de Tabla a Tarjetas */
+    .table-container {
+        background: transparent;
+        box-shadow: none;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    tr {
+        background: white;
+        border-radius: 16px;
+        margin-bottom: 16px;
+        padding: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f1f5f9;
+    }
+
+    td {
+        border: none;
+        padding: 8px 0;
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        border-bottom: 1px solid #f8fafc;
+    }
+
+    td:last-child {
+        border-bottom: none;
+    }
+
+    td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 700;
+        color: #94a3b8;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+
+    /* Ajustes específicos para celdas de tarjeta */
+    td[data-label="Alumno"] {
+        padding-left: 0;
+        padding-top: 0;
+        display: block;
+        text-align: left;
+        border-bottom: 2px solid #f1f5f9;
+        margin-bottom: 8px;
+    }
+
+    td[data-label="Alumno"]::before {
+        display: none;
+    }
+
+    .cell-user {
+        gap: 12px;
+    }
+
+    .u-name {
+        font-size: 1rem;
+    }
+
+    .mini-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .u-time {
+        font-size: 0.9rem;
+    }
+
+    .row-absent {
+        border: 1px solid #fee2e2;
+        background: #fffafa;
+    }
 }
